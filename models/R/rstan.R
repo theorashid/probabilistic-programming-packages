@@ -24,7 +24,7 @@ ngob <- ng - np # number of games to train
 data <- data %>%
     mutate(split = ifelse(row_number() <= ngob, "train", "predict"))
 
-inputs = list(
+inputs <- list(
     nt = nt, 
     ng = ngob,
     ht = data %>% filter(split == "train") %>% pull(Home.id), 
@@ -36,7 +36,7 @@ inputs = list(
     atnew = data %>% filter(split == "predict") %>% pull(Away.id)
 )
 
-fit = stan(
+fit <- stan(
     file   = "models/R/stan.stan", 
     data   = inputs,
     iter   = 10000,
