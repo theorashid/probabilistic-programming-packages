@@ -52,15 +52,15 @@ mcmc_intervals(posterior, pars = c("mu_att", "mu_def", "home"))
 mcmc_trace(posterior, pars = c("mu_att", "mu_def", "home"), facet_args = list(ncol = 1))
 
 # Extract samples
-hparams <- fit %>% extract()
+samples <- fit %>% extract()
 
 # Attack and defence
 quality <- tibble(
     Team      = teams,
-    attack    = colMeans(hparams$att),
-    attacksd  = sapply(1:nt, function(x) sd(hparams$att[,x])),
-    defence   = colMeans(hparams$def),
-    defencesd = sapply(1:nt, function(x) sd(hparams$def[,x]))
+    attack    = samples %>% pluck("att") %>% colMeans(),
+    attacksd  = samples %>% pluck("att") %>% apply(2, sd),
+    defence   = samples %>% pluck("def") %>% colMeans(),
+    defencesd = samples %>% pluck("def") %>% apply(2, sd))
 )
 
 quality %>%
@@ -81,10 +81,10 @@ predicted <- data %>%
     filter(split == "predict") %>%
     mutate(score1true = score1, score2true = score2) %>%
     mutate(
-        score1 = colMeans(hparams$s1new),
-        score1error = sapply(1:np, function(x) sd(hparams$s1new[,x])),
-        score2 = colMeans(hparams$s2new),
-        score2error = sapply(1:np, function(x) sd(hparams$s2new[,x])),
+        score1      = samples %>% pluck("s1new") %>% colMeans(),
+        score1error = samples %>% pluck("s1new") %>% apply(2, sd),
+        score2      = samples %>% pluck("s2new") %>% colMeans(),
+        score2error = samples %>% pluck("s2new") %>% apply(2, sd),
     )
 
 predicted_full <- bind_rows(

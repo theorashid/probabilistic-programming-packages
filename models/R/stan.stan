@@ -20,9 +20,9 @@ parameters {
 
     //hyper parameters
     real mu_att;
-    real<lower=0> tau_att;
+    real<lower=0> sd_att;
     real mu_def;
-    real<lower=0> tau_def;
+    real<lower=0> sd_def;
 }
 
 transformed parameters {
@@ -35,15 +35,15 @@ transformed parameters {
 
 model {
     //hyper priors
-    mu_att  ~ normal(0,0.1);
-    tau_att ~ normal(0,1);
-    mu_def  ~ normal(0,0.1);
-    tau_def ~ normal(0,1);
+    mu_att ~ normal(0,1);
+    sd_att ~ cauchy(0,3);
+    mu_def ~ normal(0,1);
+    sd_def ~ cauchy(0,3);
 
     //priors
-    att  ~ normal(mu_att, tau_att);
-    def  ~ normal(mu_def, tau_def);
-    home ~ normal(0,0.0001);
+    att  ~ normal(mu_att, sd_att);
+    def  ~ normal(mu_def, sd_def);
+    home ~ normal(0,1);
 
     //likelihood
     s1 ~ poisson(theta1);
