@@ -42,7 +42,7 @@ fit = stan(
     iter   = 10000,
     warmup = 5000,
     chains = 2,
-    thin   = 1,
+    thin   = 1
 )
 
 # Plot posterior
