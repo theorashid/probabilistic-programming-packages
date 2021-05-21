@@ -4,11 +4,11 @@ Trying out different probabilistic programming packages on the same statistical 
 ## Packages
 Implemented:
 - [`rstan`](https://mc-stan.org/rstan/)
+- [`nimble`](https://r-nimble.org)
 
 To do:
 - [`rstanarm`](https://mc-stan.org/rstanarm/)
 - [`brms`](https://paul-buerkner.github.io/brms/)
-- [`nimble`](https://r-nimble.org)
 - [`INLA`](https://www.r-inla.org)
 - [`pyro`](http://pyro.ai)
 - [`numpyro`](http://num.pyro.ai/)
