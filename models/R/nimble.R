@@ -91,22 +91,33 @@ mcmcConf <- configureMCMC(
     print = TRUE
 )
 
+# option to block correlated parameters
+mcmcConf$removeSamplers(c('mu_att','mu_def','sd_att', 'sd_def'))
+mcmcConf$addSampler(
+    target = c('mu_att', 'mu_def'),
+    type = "RW_block"
+)
+mcmcConf$addSampler(
+    target = c('sd_att', 'sd_def'),
+    type = "RW_block"
+)
+
 mcmc <- buildMCMC(mcmcConf)
 
 Cmcmc <- compileNimble(mcmc)
 
 fit <- runMCMC(
     Cmcmc,
-    niter = 10000,
-    nburn = 5000,
+    niter = 50000,
+    nburn = 45000,
     nchains = 2
 )
 
 samples <- do.call(rbind, fit) %>% as_tibble() # stack chains
 
 # Plot posterior
-mcmc_intervals(samples, pars = c("mu_att", "mu_def", "home"))
-mcmc_trace(samples, pars = c("mu_att", "mu_def", "home"), facet_args = list(ncol = 1))
+mcmc_intervals(samples, pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"))
+mcmc_trace(samples, pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"), facet_args = list(ncol = 1))
 
 team_values <- samples %>% select(-c(mu_att, mu_def, sd_att, sd_def, home))
 

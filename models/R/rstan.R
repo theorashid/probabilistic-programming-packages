@@ -39,8 +39,8 @@ inputs <- list(
 fit <- stan(
     file   = "models/R/stan.stan", 
     data   = inputs,
-    iter   = 10000,
-    warmup = 5000,
+    iter   = 50000,
+    warmup = 45000,
     chains = 2,
     thin   = 1
 )
@@ -48,8 +48,8 @@ fit <- stan(
 # Plot posterior
 posterior <- as.array(fit)
 dimnames(posterior)
-mcmc_intervals(posterior, pars = c("mu_att", "mu_def", "home"))
-mcmc_trace(posterior, pars = c("mu_att", "mu_def", "home"), facet_args = list(ncol = 1))
+mcmc_intervals(posterior, pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"))
+mcmc_trace(posterior, pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"), facet_args = list(ncol = 1))
 
 # Extract samples
 samples <- fit %>% extract()
