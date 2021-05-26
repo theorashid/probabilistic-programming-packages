@@ -71,10 +71,19 @@ model_data <- list(
     s2 = data %>% filter(split == "train") %>% pull(score2)
 )
 
+model_inits <- list(
+    "mu_att" = 0.09, 
+    "mu_def" = 0.00, 
+    "sd_att" = 0.30, 
+    "sd_def" = 0.19, 
+    "home"   = 0.24
+)
+
 model <- nimbleModel(
     code      = code,
     constants = model_constants,
-    data      = model_data
+    data      = model_data,
+    inits     = model_inits
 )
 
 Cmodel <- compileNimble(model)
@@ -91,25 +100,14 @@ mcmcConf <- configureMCMC(
     print = TRUE
 )
 
-# option to block correlated parameters
-mcmcConf$removeSamplers(c('mu_att','mu_def','sd_att', 'sd_def'))
-mcmcConf$addSampler(
-    target = c('mu_att', 'mu_def'),
-    type = "RW_block"
-)
-mcmcConf$addSampler(
-    target = c('sd_att', 'sd_def'),
-    type = "RW_block"
-)
-
 mcmc <- buildMCMC(mcmcConf)
 
 Cmcmc <- compileNimble(mcmc)
 
 fit <- runMCMC(
     Cmcmc,
-    niter = 50000,
-    nburn = 45000,
+    niter = 10000,
+    nburn = 5000,
     nchains = 2
 )
 
@@ -163,4 +161,3 @@ predicted_full <- bind_rows(
 source("utils/score_table.R")
 score_table(pl_data)
 score_table(predicted_full)
-
