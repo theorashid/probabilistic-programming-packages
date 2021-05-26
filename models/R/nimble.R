@@ -90,6 +90,7 @@ mcmcConf <- configureMCMC(
     thin  = 1,
     print = TRUE
 )
+
 mcmc <- buildMCMC(mcmcConf)
 
 Cmcmc <- compileNimble(mcmc)
@@ -115,7 +116,7 @@ quality <- tibble(
     attack    = team_values %>% select(matches("att")) %>% colMeans(),
     attacksd  = team_values %>% select(matches("att")) %>% apply(2, sd),
     defence   = team_values %>% select(matches("def")) %>% colMeans(),
-    defencesd = team_values %>% select(matches("def")) %>% apply(2, sd))
+    defencesd = team_values %>% select(matches("def")) %>% apply(2, sd)
 )
 
 quality %>%

@@ -60,7 +60,7 @@ quality <- tibble(
     attack    = samples %>% pluck("att") %>% colMeans(),
     attacksd  = samples %>% pluck("att") %>% apply(2, sd),
     defence   = samples %>% pluck("def") %>% colMeans(),
-    defencesd = samples %>% pluck("def") %>% apply(2, sd))
+    defencesd = samples %>% pluck("def") %>% apply(2, sd)
 )
 
 quality %>%
