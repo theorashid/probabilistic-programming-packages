@@ -36,9 +36,9 @@ transformed parameters {
 model {
     //hyper priors
     mu_att ~ normal(0,1);
-    sd_att ~ cauchy(0,3);
+    sd_att ~ student_t(3,0,2.5);
     mu_def ~ normal(0,1);
-    sd_def ~ cauchy(0,3);
+    sd_def ~ student_t(3,0,2.5);
 
     //priors
     att  ~ normal(mu_att, sd_att);

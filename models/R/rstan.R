@@ -39,7 +39,7 @@ inputs <- list(
 fit <- stan(
     file   = "models/R/stan.stan", 
     data   = inputs,
-    iter   = 10000,
+    iter   = 15000,
     warmup = 5000,
     chains = 2,
     thin   = 1

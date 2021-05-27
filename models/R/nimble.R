@@ -25,12 +25,12 @@ data <- data %>%
 
 code <- nimbleCode({
     # priors
-    mu_att ~ dnorm(0,sd = 1)
-    sd_att ~ dunif(0,2)
-    mu_def ~ dnorm(0,sd = 1)
-    sd_def ~ dunif(0,2)
+    mu_att ~ dnorm(0, sd = 1)
+    sd_att ~ dt(mu = 0, sigma = 2.5, df = 3)
+    mu_def ~ dnorm(0, sd = 1)
+    sd_def ~ dt(mu = 0, sigma = 2.5, df = 3)
 
-    home ~ dnorm(0,1) # home advantage
+    home ~ dnorm(0, sd = 1) # home advantage
 
     for (i in 1:nt) {
         att[i] ~ dnorm(mu_att, sd = sd_att)
@@ -106,7 +106,7 @@ Cmcmc <- compileNimble(mcmc)
 
 fit <- runMCMC(
     Cmcmc,
-    niter = 10000,
+    niter = 15000,
     nburn = 5000,
     nchains = 2
 )
