@@ -32,7 +32,7 @@ data <- bind_rows(
 ) %>%
     arrange(Round, game.id)
 
-fit_new <- stan_glmer(
+fit <- stan_glmer(
     formula = score ~ 1 + Home + (1|attacking) + (1|defending),
     family = poisson,
     data   = data %>% filter(split == "train"),
@@ -42,3 +42,70 @@ fit_new <- stan_glmer(
     thin   = 1
 )
 
+# SORT PRIORS
+# IS THERE A WAY TO GIVE EACH RANDOM EFFECT A NON-ZERO MEAN?
+
+posterior <- as.array(fit)
+dimnames(posterior)
+mcmc_intervals(posterior, pars = c("Sigma[attacking:(Intercept),(Intercept)]", "Sigma[defending:(Intercept),(Intercept)]", "HomeTRUE"))
+mcmc_trace(posterior, pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"), facet_args = list(ncol = 1))
+
+samples <- as.data.frame(fit) %>% as_tibble()
+
+# Attack and defence
+quality <- tibble(
+    Team      = teams,
+    attack    = samples %>% select(matches(" attacking")) %>% colMeans(),
+    attacksd  = samples %>% select(matches(" attacking")) %>% apply(2, sd),
+    defence   = samples %>% select(matches(" defending")) %>% colMeans(),
+    defencesd = samples %>% select(matches(" defending")) %>% apply(2, sd)
+)
+
+quality %>%
+    ggplot(aes(
+        x = attack, y = defence, 
+        xmin = attack  - attacksd,  xmax = attack  + attacksd,
+        ymin = defence - defencesd, ymax = defence + defencesd,
+        label = Team
+    )) +
+    geom_point(colour = "grey25") +
+    geom_errorbar(colour = "grey25", alpha = 0.4) +
+    geom_errorbarh(colour = "grey25", alpha = 0.4) +
+    geom_text() +
+    theme_minimal()
+
+# Predicted goals and table
+predicted_score <- posterior_predict(
+    fit, 
+    newdata = data %>% filter(split == "predict") %>% select(attacking, defending, Home)
+)
+
+predicted <- data %>%
+    filter(split == "predict") %>%
+    mutate(scoretrue = score) %>%
+    mutate(
+        score       = predicted_score %>% colMeans(),
+        score_error = predicted_score %>% apply(2, sd)
+    )
+
+predicted_full <- bind_rows(
+    data %>% filter(split == "train"),
+    predicted %>% select(Round, game.id, attacking, defending, score, split, Home)
+)
+
+predicted_full <- left_join(
+    predicted_full %>%
+        filter(Home) %>%
+        select(-Home) %>%
+        rename(Home = attacking, Away = defending, score1 = score),
+    predicted_full %>%
+        filter(!Home) %>%
+        select(-Home) %>%
+        rename(Away = attacking, Home = defending, score2 = score)
+) %>%
+    select(Round, Home, score1, score2, Away)
+
+# Final table – see how well the model predicts the final 50 games
+source("utils/score_table.R")
+score_table(pl_data)
+score_table(predicted_full)

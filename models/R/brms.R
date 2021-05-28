@@ -32,16 +32,16 @@ data <- bind_rows(
 ) %>%
     arrange(Round, game.id)
 
-fit <- get_prior(
+fit <- brm(
     score ~ 1 + Home + (1|attacking) + (1|defending),
     family = poisson,
-    prior  = prior(
-        prior("normal(0, 1)", class="Intercept"),
-        set_prior("normal(0, 1)", class="b"),
-        #Create prior for scale parameters in hierarchical models
-        set_prior("student_t(4,0,1)", class="sd"),
-        prior("student_t(4,0,1)", class="sigma")
-    ),
+    # prior  = prior(
+    #     prior("normal(0, 1)", class="Intercept"),
+    #     set_prior("normal(0, 1)", class="b"),
+    #     #Create prior for scale parameters in hierarchical models
+    #     set_prior("student_t(4,0,1)", class="sd"),
+    #     prior("student_t(4,0,1)", class="sigma")
+    # ),
     data   = data %>% filter(split == "train"),
     iter   = 15000,
     warmup = 5000,
@@ -49,22 +49,37 @@ fit <- get_prior(
     thin   = 1
 )
 
-# SORT PRIORS AND QUALITY EXTRACTION
+# SORT PRIORS
+# IS THERE A WAY TO GIVE EACH RANDOM EFFECT A NON-ZERO MEAN?
 
 posterior <- as.array(fit)
+dimnames(posterior)
 mcmc_intervals(posterior, pars = c("sd_attacking__Intercept", "sd_defending__Intercept", "b_HomeTRUE"))
 mcmc_trace(posterior, pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"), facet_args = list(ncol = 1))
 
-samples <- fit %>% extract()
+samples <- as.data.frame(fit) %>% as_tibble()
 
-
-prior_brms <- c(
-set_prior("normal(0, 1)", class="Intercept"),
-set_prior("normal(0, 1)", class="b"),
-#Create prior for scale parameters in hierarchical models
-set_prior("student_t(4,0,1)", class="sd"),
-set_prior("student_t(4,0,1)", class="sigma")
+# Attack and defence
+quality <- tibble(
+    Team      = teams,
+    attack    = samples %>% select(matches("r_attacking")) %>% colMeans(),
+    attacksd  = samples %>% select(matches("r_attacking")) %>% apply(2, sd),
+    defence   = samples %>% select(matches("r_defending")) %>% colMeans(),
+    defencesd = samples %>% select(matches("r_defending")) %>% apply(2, sd)
 )
+
+quality %>%
+    ggplot(aes(
+        x = attack, y = defence, 
+        xmin = attack  - attacksd,  xmax = attack  + attacksd,
+        ymin = defence - defencesd, ymax = defence + defencesd,
+        label = Team
+    )) +
+    geom_point(colour = "grey25") +
+    geom_errorbar(colour = "grey25", alpha = 0.4) +
+    geom_errorbarh(colour = "grey25", alpha = 0.4) +
+    geom_text() +
+    theme_minimal()
 
 # Predicted goals and table
 predicted_score <- predict(
