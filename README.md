@@ -13,7 +13,7 @@ To do:
 - [`pyro`](http://pyro.ai)
 - [`numpyro`](http://num.pyro.ai/)
 - [`tensorflow_probability`](https://www.tensorflow.org/probability/)
-- [`edward`](http://edwardlib.org)
+- [`edward2`](https://github.com/google/edward2)
 - [`PyMC3`](http://docs.pymc.io)
 - [`Turing`](https://turing.ml/)
 
