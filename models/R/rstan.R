@@ -90,7 +90,8 @@ predicted <- data %>%
 predicted_full <- bind_rows(
     data %>% filter(split == "train") %>% select(Round, Home, score1, score2, Away),
     predicted %>% select(Round, Home, score1, score2, Away)
-)
+) %>%
+    mutate(score1 = round(score1), score2 = round(score2))
 
 # Final table – see how well the model predicts the final 50 games
 source("utils/score_table.R")
