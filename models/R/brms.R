@@ -35,22 +35,17 @@ data <- bind_rows(
 fit <- brm(
     score ~ 1 + Home + (1|attacking) + (1|defending),
     family = poisson,
-    # prior  = prior(
-    #     prior("normal(0, 1)", class="Intercept"),
-    #     set_prior("normal(0, 1)", class="b"),
-    #     #Create prior for scale parameters in hierarchical models
-    #     set_prior("student_t(4,0,1)", class="sd"),
-    #     prior("student_t(4,0,1)", class="sigma")
-    # ),
+    prior = c(
+        prior(normal(0, 1), class = b),
+        prior(normal(0, 1), class = Intercept),
+        prior(student_t(3, 0, 2.5), class = sd)
+    ),
     data   = data %>% filter(split == "train"),
     iter   = 15000,
     warmup = 5000,
     chains = 2,
     thin   = 1
 )
-
-# SORT PRIORS
-# IS THERE A WAY TO GIVE EACH RANDOM EFFECT A NON-ZERO MEAN?
 
 posterior <- as.array(fit)
 dimnames(posterior)
@@ -98,7 +93,8 @@ predicted <- data %>%
 predicted_full <- bind_rows(
     data %>% filter(split == "train"),
     predicted %>% select(Round, game.id, attacking, defending, score, split, Home)
-)
+) %>%
+    mutate(score = round(score))
 
 predicted_full <- left_join(
     predicted_full %>%
