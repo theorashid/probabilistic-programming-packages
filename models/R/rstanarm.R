@@ -35,6 +35,8 @@ data <- bind_rows(
 fit <- stan_glmer(
     formula = score ~ 1 + Home + (1|attacking) + (1|defending),
     family = poisson,
+    # prior_intercept  = default_prior_intercept(family),
+    # prior_covariance = decov(),
     data   = data %>% filter(split == "train"),
     iter   = 15000,
     warmup = 5000,
@@ -42,13 +44,10 @@ fit <- stan_glmer(
     thin   = 1
 )
 
-# SORT PRIORS
-# IS THERE A WAY TO GIVE EACH RANDOM EFFECT A NON-ZERO MEAN?
-
 posterior <- as.array(fit)
 dimnames(posterior)
 mcmc_intervals(posterior, pars = c("Sigma[attacking:(Intercept),(Intercept)]", "Sigma[defending:(Intercept),(Intercept)]", "HomeTRUE"))
-mcmc_trace(posterior, pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"), facet_args = list(ncol = 1))
+mcmc_trace(posterior, pars = c("Sigma[attacking:(Intercept),(Intercept)]", "Sigma[defending:(Intercept),(Intercept)]", "HomeTRUE"), facet_args = list(ncol = 1))
 
 samples <- as.data.frame(fit) %>% as_tibble()
 
@@ -91,7 +90,8 @@ predicted <- data %>%
 predicted_full <- bind_rows(
     data %>% filter(split == "train"),
     predicted %>% select(Round, game.id, attacking, defending, score, split, Home)
-)
+) %>%
+    mutate(score = round(score))
 
 predicted_full <- left_join(
     predicted_full %>%
