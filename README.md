@@ -7,9 +7,9 @@ Implemented:
 - [`nimble`](https://r-nimble.org)
 - [`rstanarm`](https://mc-stan.org/rstanarm/)
 - [`brms`](https://paul-buerkner.github.io/brms/)
+- [`INLA`](https://www.r-inla.org)
 
 To do:
-- [`INLA`](https://www.r-inla.org)
 - [`pyro`](http://pyro.ai)
 - [`numpyro`](http://num.pyro.ai/)
 - [`tensorflow_probability`](https://www.tensorflow.org/probability/)
