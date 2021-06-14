@@ -1,0 +1,20 @@
+name: bayesian
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  - python>=3.8
+  - black
+  - flake8
+  - pandas
+  - pymc3
+  - pytorch
+  - pyro-ppl
+  - numpyro
+  - arviz
+  - bokeh
+  - pip
+  - pip:
+    - tensorflow
+    - tensorflow-probability
+    - edward2

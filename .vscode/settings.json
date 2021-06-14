@@ -1,0 +1,8 @@
+{
+    "python.pythonPath": "/Users/tar15/opt/anaconda3/envs/bayesian/bin/python",
+    "python.formatting.provider": "black",
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "python.linting.enabled": true,
+    "python.linting.flake8Enabled": true
+}
