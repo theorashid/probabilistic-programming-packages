@@ -74,10 +74,10 @@ az.plot_trace(
 # Attack and defence
 quality = teams.copy()
 quality = quality.assign(
-    attack=np.mean(fit["attack"], axis=0),
-    attacksd=np.std(fit["attack"], axis=0),
-    defend=np.mean(fit["defend"], axis=0),
-    defendsd=np.std(fit["defend"], axis=0),
+    attack=fit["attack"].mean(axis=0),
+    attacksd=fit["attack"].std(axis=0),
+    defend=fit["defend"].mean(axis=0),
+    defendsd=fit["defend"].std(axis=0),
 )
 quality = quality.assign(
     attack_low=quality["attack"] - quality["attacksd"],
