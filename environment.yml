@@ -11,11 +11,11 @@ dependencies:
   - pymc3
   - pytorch::pytorch
   - pyro-ppl
-  - numpyro
   - arviz
   - bokeh
   - pip
   - pip:
+    - git+https://github.com/pyro-ppl/numpyro.git
     - tensorflow
     - tensorflow-probability
     - edward2
