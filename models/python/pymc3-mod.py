@@ -33,7 +33,6 @@ df["split"] = np.where(df.index + 1 <= ngob, "train", "predict")
 
 train = df[df["split"] == "train"]
 
-# %%
 with pm.Model() as model:
     # priors
     mu_att = pm.Normal("mu_att", mu=0, sigma=1)
@@ -58,11 +57,9 @@ with pm.Model() as model:
     s1 = pm.Poisson("s1", mu=theta1, observed=train["score1"])
     s2 = pm.Poisson("s2", mu=theta2, observed=train["score2"])
 
-# %%
 with model:
     fit = pm.sample(draws=10000, tune=5000, chains=2, cores=1, random_seed=1)
 
-# %%
 # Plot posterior
 az.plot_forest(
     fit,
