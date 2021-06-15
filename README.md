@@ -8,13 +8,13 @@ Implemented:
 - [`rstanarm`](https://mc-stan.org/rstanarm/)
 - [`brms`](https://paul-buerkner.github.io/brms/)
 - [`INLA`](https://www.r-inla.org)
+- [`PyMC3`](http://docs.pymc.io)
 
 To do:
 - [`pyro`](http://pyro.ai)
 - [`numpyro`](http://num.pyro.ai/)
 - [`tensorflow_probability`](https://www.tensorflow.org/probability/)
 - [`edward2`](https://github.com/google/edward2)
-- [`PyMC3`](http://docs.pymc.io)
 - [`Turing`](https://turing.ml/)
 
 ## Model
