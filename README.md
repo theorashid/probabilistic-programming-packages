@@ -9,10 +9,10 @@ Implemented:
 - [`brms`](https://paul-buerkner.github.io/brms/)
 - [`INLA`](https://www.r-inla.org)
 - [`PyMC3`](http://docs.pymc.io)
+- [`numpyro`](http://num.pyro.ai/)
 
 To do:
 - [`pyro`](http://pyro.ai)
-- [`numpyro`](http://num.pyro.ai/)
 - [`tensorflow_probability`](https://www.tensorflow.org/probability/)
 - [`edward2`](https://github.com/google/edward2)
 - [`Turing`](https://turing.ml/)
