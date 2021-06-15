@@ -137,10 +137,10 @@ with model:
 
 predicted_full = predict.copy()
 predicted_full = predicted_full.assign(
-    score1=np.mean(predicted_score["s1"], axis=0).round(),
-    score1error=np.std(predicted_score["s1"], axis=0),
-    score2=np.mean(predicted_score["s2"], axis=0).round(),
-    score2error=np.std(predicted_score["s2"], axis=0),
+    score1=predicted_score["s1"].mean(axis=0).round(),
+    score1error=predicted_score["s1"].std(axis=0),
+    score2=predicted_score["s2"].mean(axis=0).round(),
+    score2error=predicted_score["s2"].std(axis=0),
 )
 
 predicted_full = train.append(
