@@ -1,4 +1,4 @@
-"""Run Premier League prediction model using numpyro
+"""Run Premier League prediction model using pyro
 """
 # %%
 import pandas as pd
