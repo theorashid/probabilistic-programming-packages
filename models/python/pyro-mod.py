@@ -7,9 +7,10 @@ import pyro
 import pyro.distributions as dist
 import torch
 
-# from torch.distributions import constraints
+from torch.distributions import constraints
 from pyro.infer import SVI, Trace_ELBO
-from pyro.contrib.autoguide import AutoDiagonalNormal
+
+# from pyro.contrib.autoguide import AutoDiagonalNormal
 from pyro.optim import Adam
 
 # import arviz as az
@@ -66,35 +67,48 @@ def model(home_id, away_id, score1_obs=None, score2_obs=None):
         pyro.sample("s2", dist.Poisson(theta2), obs=score2_obs)
 
 
-# def guide(home_id, away_id, score1_obs=None, score2_obs=None):
-#     # priors
-#     mu_loc = pyro.param("mu_loc", torch.zeros(2,))
-#     mu_scale = pyro.param("mu_scale", torch.ones(2,), constraint=constraints.positive)
-#     mu_att = pyro.sample("mu_att", dist.Normal(mu_loc[1], mu_scale[1]))
-#     mu_def = pyro.sample("mu_def", dist.Normal(mu_loc[2], mu_scale[2]))
-
-
-#     sd_att = pyro.sample("sd_att", dist.StudentT(3.0, 0.0, 2.5))
-#     sd_def = pyro.sample("sd_def", dist.StudentT(3.0, 0.0, 2.5))
-
-#     home = pyro.sample("home", dist.Normal(0.0, 1.0))  # home advantage
-
-#     nt = len(np.unique(home_id))
-
-#     # team-specific model parameters
-#     with pyro.plate("plate_teams", nt):
-#         attack = pyro.sample("attack", dist.Normal(mu_att, sd_att))
-#         defend = pyro.sample("defend", dist.Normal(mu_def, sd_def))
-
-#     # likelihood
-#     theta1 = torch.exp(home + attack[home_id] - defend[away_id])
-#     theta2 = torch.exp(attack[away_id] - defend[home_id])
-
-#     with pyro.plate("data", len(home_id)):
-#         pyro.sample("s1", dist.Poisson(theta1), obs=score1_obs)
-#         pyro.sample("s2", dist.Poisson(theta2), obs=score2_obs)
 # %%
-guide = AutoDiagonalNormal(model)
+def guide(home_id, away_id, score1_obs=None, score2_obs=None):
+    # priors
+    locs = pyro.param(
+        "mu_loc",
+        torch.zeros(
+            5,
+        ),
+    )
+    scales = pyro.param(
+        "mu_scale",
+        torch.ones(
+            5,
+        ),
+        constraint=constraints.positive,
+    )
+
+    mu_att = pyro.sample("mu_att", dist.Normal(locs[0], scales[0]))
+    mu_def = pyro.sample("mu_def", dist.Normal(locs[1], scales[1]))
+
+    sd_att = pyro.sample("sd_att", dist.StudentT(torch.tensor(3.0), locs[2], scales[2]))
+    sd_def = pyro.sample("sd_def", dist.StudentT(torch.tensor(3.0), locs[3], scales[3]))
+
+    home = pyro.sample("home", dist.Normal(locs[4], scales[4]))  # home advantage
+
+    nt = len(np.unique(home_id))
+
+    # team-specific model parameters
+    with pyro.plate("plate_teams", nt):
+        attack = pyro.sample("attack", dist.Normal(mu_att, sd_att))
+        defend = pyro.sample("defend", dist.Normal(mu_def, sd_def))
+
+    # likelihood
+    theta1 = torch.exp(home + attack[home_id] - defend[away_id])
+    theta2 = torch.exp(attack[away_id] - defend[home_id])
+
+    with pyro.plate("data", len(home_id)):
+        pyro.sample("s1", dist.Poisson(theta1), obs=score1_obs)
+        pyro.sample("s2", dist.Poisson(theta2), obs=score2_obs)
+
+
+# guide = AutoDiagonalNormal(model)
 
 # %%
 svi = SVI(model=model, guide=guide, optim=Adam({"lr": 0.001}), loss=Trace_ELBO())
@@ -106,10 +120,10 @@ pyro.set_rng_seed(1)
 for j in range(num_iterations):
     # calculate the loss and take a gradient step
     loss = svi.step(
-        home_id=train["Home_id"].values,
-        away_id=train["Away_id"].values,
-        score1_obs=train["score1"].values,
-        score2_obs=train["score2"].values,
+        home_id=torch.tensor(train["Home_id"]),
+        away_id=torch.tensor(train["Away_id"]),
+        score1_obs=torch.tensor(train["score1"]),
+        score2_obs=torch.tensor(train["score2"]),
     )
     if j % 100 == 0:
         print("[iteration %04d] loss: %.4f" % (j + 1, loss / len(train)))
