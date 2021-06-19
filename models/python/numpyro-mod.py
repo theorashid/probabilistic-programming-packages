@@ -87,7 +87,6 @@ az.plot_trace(
     fit, var_names=("mu_att", "mu_def", "sd_att", "sd_def", "home"), backend="bokeh"
 )
 
-# %%
 fit = mcmc.get_samples()
 
 # Attack and defence
