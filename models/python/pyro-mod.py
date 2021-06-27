@@ -114,9 +114,11 @@ def guide(home_id, away_id, score1_obs=None, score2_obs=None):
 svi = SVI(model=model, guide=guide, optim=Adam({"lr": 0.001}), loss=Trace_ELBO())
 
 # %%
-num_iterations = 100
 pyro.clear_param_store()  # clear global parameter cache
 pyro.set_rng_seed(1)
+
+num_iterations = 1000
+advi_loss = []
 for j in range(num_iterations):
     # calculate the loss and take a gradient step
     loss = svi.step(
@@ -125,8 +127,9 @@ for j in range(num_iterations):
         score1_obs=torch.tensor(train["score1"]),
         score2_obs=torch.tensor(train["score2"]),
     )
+    advi_loss.append(loss)
     if j % 100 == 0:
-        print("[iteration %04d] loss: %.4f" % (j + 1, loss / len(train)))
+        print("[iteration %4d] loss: %.4f" % (j + 1, loss))
 
 
 # nuts_kernel = NUTS(model)
@@ -141,6 +144,7 @@ for j in range(num_iterations):
 #     score2_obs=train["score2"].values,
 # )
 # %%
+guide.get_posterior().sample((1000,))
 # fit = az.from_numpyro(mcmc)
 
 # # Plot posterior
