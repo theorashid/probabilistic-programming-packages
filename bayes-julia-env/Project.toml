@@ -2,4 +2,6 @@
 ArviZ = "131c737c-5715-5e2e-ad31-c244f01c1dc7"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
