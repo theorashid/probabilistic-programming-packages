@@ -5,6 +5,10 @@ using ArviZ, Pyplot
 
 seed!(1)
 
+Turing.setadbackend(:forwarddiff)
+# Turing.setadbackend(:zygote)
+# Turing.setadbackend(:reversediff)
+
 pl_data = DataFrame(CSV.File("data/premierleague.csv"))
 
 ng   = nrow(pl_data)  # number of games
@@ -26,33 +30,25 @@ end
 
 train = df[df.split .== "train", :]
 
-@model model(s1, s2, home_id, away_id; nt=length(unique(home_id)), ng=length(home_id)) = begin
+@model model(s1, s2, home_id, away_id; nt=length(unique(home_id))) = begin
     # priors
     μ_att ~ Normal(0, 1)
-    σ_att ~ truncated(Cauchy(0, 1), 0, Inf)
+    σ_att ~ truncated(LocationScale(0.0, 2.5, TDist(3)), 0, Inf)
     μ_def ~ Normal(0, 1)
-    σ_def ~ truncated(Cauchy(0, 1), 0, Inf)
+    σ_def ~ truncated(LocationScale(0.0, 2.5, TDist(3)), 0, Inf)
 
     home ~ Normal(0, 1) # home advantage
 
     # team-specific model parameters
-    attack = Vector(undef, nt)
-    defend = Vector(undef, nt)
-    for i = 1:nt
-        attack[i] ~ Normal(μ_att, σ_att)
-        defend[i] ~ Normal(μ_def, σ_def)
-    end
+    attack ~ filldist(Normal(μ_att, σ_att), nt)
+    defend ~ filldist(Normal(μ_def, σ_def), nt)
 
     # Likelihood
-    θ_1 = Vector(undef, ng)
-    θ_2 = Vector(undef, ng)
-    for i in 1:ng
-        θ_1[i] = exp(home + attack[home_id[i]] - defend[away_id[i]])
-        θ_2[i] = exp(attack[away_id[i]] - defend[home_id[i]])
+    θ_1 = @. exp(home + attack[home_id] - defend[away_id])
+    θ_2 = @. exp(attack[away_id] - defend[home_id])
 
-        s1[i] ~ Poisson(θ_1[i])
-        s2[i] ~ Poisson(θ_2[i])
-    end
+    s1 ~ arraydist(Poisson.(θ_1))
+    s2 ~ arraydist(Poisson.(θ_2))
 end;
 
 fit = sample(
@@ -63,20 +59,21 @@ fit = sample(
         train[!,:Away_id]
     ),
     NUTS(), 
-    MCMCThreads(), 
-    1000, 
-    2
+    MCMCThreads(),
+    1000,
+    1,
+    discard_initial=500,
+    thinning=1,
+    progress=true
 )
+
+display(fit)
 
 # JULIA IS SLOW?
 # JULIA IS SLOW AND GETS QUICKER?
 # PROGRESS BAR?
 # BURN?
 # PREDICTION
-
-# using Distributed
-# addprocs(2)
-# fit = sample(model(a, b, c, d), NUTS(), MCMCDistributed(), 1000, 2)
 
 # using DynamicHMC
 # fit = sample(gdemo(1.5, 2.0), DynamicNUTS(), 2000)
