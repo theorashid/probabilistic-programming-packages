@@ -16,6 +16,7 @@ To do:
 - [`tensorflow_probability`](https://www.tensorflow.org/probability/)
 - [`edward2`](https://github.com/google/edward2)
 - [`Turing`](https://turing.ml/)
+- [`gen`](https://www.gen.dev)
 
 ## Model
 We fit a hierarchical model to predict football results over a Premier League season. The idea is taken from the Stan's video on [Hierarchical Modelling in Stan: Predicting the Premier League](https://www.youtube.com/watch?v=dNZQrcAjgXQ), which itself is inspired by the paper [Bayesian hierarchical model for the prediction of
