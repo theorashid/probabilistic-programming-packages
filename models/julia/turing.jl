@@ -2,7 +2,7 @@ using CSV, DataFrames
 using Random:seed!
 using Distributions, Turing
 using ArviZ
-using Pyplot, Gadfly
+using PyPlot, Gadfly
 
 seed!(1)
 
@@ -111,38 +111,31 @@ Gadfly.plot(
 
 # Predicted goals and table
 pred = df[df.split .== "predict", :]
-m_pred = model(
+model_missing = model(
     Vector{Missing}(missing, npr),
     Vector{Missing}(missing, npr),
     pred[!, :Home_id],
     pred[!, :Away_id]
 )
 
-predictions = predict(
-    m_pred, fit
-);
+m_pred = DynamicPPL.Model{(:s1, :s2,)}(
+    :m_pred,
+    model_missing.f,
+    model_missing.args,
+    model_missing.defaults
+)
 
+predictions = predict(m_pred, fit)
 
+summary = DataFrame(summarystats(predictions))
+pred[!, :score1]   = @. convert(Int, round(summary[1:npr, :mean]))
+pred[!, :score1sd] = summary[1:npr, :std]
+pred[!, :score2]   = @. convert(Int, round(summary[npr + 1:end, :mean]))
+pred[!, :score2sd] = summary[npr + 1:end, :std]
 
-# predicted <- data %>%
-#     filter(split == "predict") %>%
-#     mutate(score1true = score1, score2true = score2) %>%
-#     mutate(
-#         score1      = samples %>% pluck("s1new") %>% colMeans(),
-#         score1error = samples %>% pluck("s1new") %>% apply(2, sd),
-#         score2      = samples %>% pluck("s2new") %>% colMeans(),
-#         score2error = samples %>% pluck("s2new") %>% apply(2, sd),
-#     )
+predicted_full = vcat(select(train, [:Round, :Home, :score1, :score2, :Away]), select(pred, [:Round, :Home, :score1, :score2, :Away]))
 
-# predicted_full <- bind_rows(
-#     data %>% filter(split == "train") %>% select(Round, Home, score1, score2, Away),
-#     predicted %>% select(Round, Home, score1, score2, Away)
-# ) %>%
-#     mutate(score1 = round(score1), score2 = round(score2))
-
-# # Final table – see how well the model predicts the final 50 games
-# source("utils/score_table.R")
-# score_table(pl_data)
-# score_table(predicted_full)
-
-
+#  Final table – see how well the model predicts the final 50 games
+include("utils/score_table.jl")
+score_table(pl_data)
+score_table(predicted_full)

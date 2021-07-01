@@ -10,13 +10,13 @@ Implemented:
 - [`INLA`](https://www.r-inla.org)
 - [`PyMC3`](http://docs.pymc.io)
 - [`numpyro`](http://num.pyro.ai/)
+- [`Turing`](https://turing.ml/)
 
 To do:
 - [`pyro`](http://pyro.ai)
 - [`tensorflow_probability`](https://www.tensorflow.org/probability/)
 - [`edward2`](https://github.com/google/edward2)
-- [`Turing`](https://turing.ml/)
-- [`gen`](https://www.gen.dev)
+- [`Gen`](https://www.gen.dev)
 - [`Soss`](https://cscherrer.github.io/Soss.jl/stable/)
 
 ## Model
