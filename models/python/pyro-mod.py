@@ -86,7 +86,7 @@ def guide(home_id, away_id, score1_obs=None, score2_obs=None):
     pyro.sample("mu_def", dist.Normal(mu_locs[1], mu_scales[1]))
 
     pyro.sample("sd_att", dist.StudentT(sd_dfs[0], torch.tensor(0.0), sd_scales[0]))
-    pyro.sample("sd_def", dist.StudentT(sd_dfs[0], torch.tensor(0.0), sd_scales[1]))
+    pyro.sample("sd_def", dist.StudentT(sd_dfs[1], torch.tensor(0.0), sd_scales[1]))
 
     pyro.sample("home", dist.Normal(mu_locs[2], mu_scales[2]))  # home advantage
 
