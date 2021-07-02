@@ -70,42 +70,37 @@ def model(home_id, away_id, score1_obs=None, score2_obs=None):
 # %%
 def guide(home_id, away_id, score1_obs=None, score2_obs=None):
     # priors
-    locs = pyro.param(
-        "mu_loc",
-        torch.zeros(
-            5,
-        ),
-    )
-    scales = pyro.param(
-        "mu_scale",
-        torch.ones(
-            5,
-        ),
-        constraint=constraints.positive,
+    mu_locs = pyro.param("mu_loc", torch.tensor(0.0).expand(3))
+    mu_scales = pyro.param(
+        "mu_scale", torch.tensor(0.1).expand(3), constraint=constraints.positive
     )
 
-    mu_att = pyro.sample("mu_att", dist.Normal(locs[0], scales[0]))
-    mu_def = pyro.sample("mu_def", dist.Normal(locs[1], scales[1]))
+    sd_dfs = pyro.param(
+        "sd_df", torch.tensor(2.0).expand(3), constraint=constraints.positive
+    )
+    sd_scales = pyro.param(
+        "sd_scale", torch.tensor(0.1).expand(3), constraint=constraints.positive
+    )
 
-    sd_att = pyro.sample("sd_att", dist.StudentT(torch.tensor(3.0), locs[2], scales[2]))
-    sd_def = pyro.sample("sd_def", dist.StudentT(torch.tensor(3.0), locs[3], scales[3]))
+    pyro.sample("mu_att", dist.Normal(mu_locs[0], mu_scales[0]))
+    pyro.sample("mu_def", dist.Normal(mu_locs[1], mu_scales[1]))
 
-    home = pyro.sample("home", dist.Normal(locs[4], scales[4]))  # home advantage
+    pyro.sample("sd_att", dist.StudentT(sd_dfs[0], torch.tensor(0.0), sd_scales[0]))
+    pyro.sample("sd_def", dist.StudentT(sd_dfs[0], torch.tensor(0.0), sd_scales[1]))
+
+    pyro.sample("home", dist.Normal(mu_locs[2], mu_scales[2]))  # home advantage
 
     nt = len(np.unique(home_id))
 
+    mu_team_locs = pyro.param("mu_team_loc", torch.tensor(0.0).expand(2))
+    mu_team_scales = pyro.param(
+        "mu_team_scale", torch.tensor(0.1).expand(2), constraint=constraints.positive
+    )
+
     # team-specific model parameters
     with pyro.plate("plate_teams", nt):
-        attack = pyro.sample("attack", dist.Normal(mu_att, sd_att))
-        defend = pyro.sample("defend", dist.Normal(mu_def, sd_def))
-
-    # likelihood
-    theta1 = torch.exp(home + attack[home_id] - defend[away_id])
-    theta2 = torch.exp(attack[away_id] - defend[home_id])
-
-    with pyro.plate("data", len(home_id)):
-        pyro.sample("s1", dist.Poisson(theta1), obs=score1_obs)
-        pyro.sample("s2", dist.Poisson(theta2), obs=score2_obs)
+        pyro.sample("attack", dist.Normal(mu_team_locs[0], mu_team_scales[0]))
+        pyro.sample("defend", dist.Normal(mu_team_locs[1], mu_team_scales[1]))
 
 
 # guide = AutoDiagonalNormal(model)
