@@ -1,6 +1,6 @@
 """Run Premier League prediction model using numpyro
 """
-
+# %%
 import pandas as pd
 import numpy as np
 import numpyro
@@ -37,12 +37,24 @@ df["split"] = np.where(df.index + 1 <= ngob, "train", "predict")
 train = df[df["split"] == "train"]
 
 
+# create subclass for inference with AbsTransform
+class cAbsTransform(dist.transforms.AbsTransform):
+    def log_abs_det_jacobian(self, x, y, intermediates=None):
+        return jnp.zeros_like(x)
+
+
 def model(home_id, away_id, score1_obs=None, score2_obs=None):
     # priors
     mu_att = numpyro.sample("mu_att", dist.Normal(0.0, 1.0))
-    sd_att = numpyro.sample("sd_att", dist.StudentT(3.0, 0.0, 2.5))
+    sd_att = numpyro.sample(
+        "sd_att",
+        dist.TransformedDistribution(dist.StudentT(3.0, 0.0, 2.5), cAbsTransform()),
+    )
     mu_def = numpyro.sample("mu_def", dist.Normal(0.0, 1.0))
-    sd_def = numpyro.sample("sd_def", dist.StudentT(3.0, 0.0, 2.5))
+    sd_def = numpyro.sample(
+        "sd_def",
+        dist.TransformedDistribution(dist.StudentT(3.0, 0.0, 2.5), cAbsTransform()),
+    )
 
     home = numpyro.sample("home", dist.Normal(0.0, 1.0))  # home advantage
 
