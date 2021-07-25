@@ -217,5 +217,3 @@ def score_table(df):
 
 score_table(pl_data)
 score_table(predicted_full)
-
-# %%
