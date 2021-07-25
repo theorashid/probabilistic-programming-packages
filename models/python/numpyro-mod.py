@@ -13,6 +13,9 @@ from bokeh.plotting import figure, show
 from bokeh.models import ColumnDataSource, Whisker
 from bokeh.models.tools import HoverTool
 
+numpyro.set_platform("cpu")
+numpyro.set_host_device_count(2)
+
 __author__ = "Theo Rashid"
 __email__ = "tar15@ic.ac.uk"
 
@@ -214,3 +217,5 @@ def score_table(df):
 
 score_table(pl_data)
 score_table(predicted_full)
+
+# %%
