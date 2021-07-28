@@ -1,22 +1,21 @@
 """Run Premier League prediction model using pyro
 """
-# %%
+
 import pandas as pd
 import numpy as np
 import pyro
 import pyro.distributions as dist
 import torch
-
 from torch.distributions import constraints
 from pyro.infer import SVI, Trace_ELBO, Predictive
-from pyro.optim import Adam
+from pyro.optim import ClippedAdam
 from bokeh.plotting import figure, show
 from bokeh.models import ColumnDataSource, Whisker
 from bokeh.models.tools import HoverTool
 
 __author__ = "Theo Rashid"
 __email__ = "tar15@ic.ac.uk"
-# %%
+
 pl_data = pd.read_csv("../../data/premierleague.csv")
 
 ng = len(pl_data)  # number of games
@@ -38,7 +37,6 @@ df["split"] = np.where(df.index + 1 <= ngob, "train", "predict")
 train = df[df["split"] == "train"]
 
 
-# %%
 class FoldedTransform(dist.transforms.AbsTransform):
     def log_abs_det_jacobian(self, x, y):
         return torch.zeros_like(x)
@@ -89,10 +87,10 @@ def guide(home_id, away_id, score1_obs=None, score2_obs=None):
 
     nt = len(np.unique(home_id))
 
-    mu_team_locs = pyro.param("mu_team_loc", torch.tensor(0.0).expand(2))  # , nt))
+    mu_team_locs = pyro.param("mu_team_loc", torch.tensor(0.0).expand(2, nt))
     mu_team_scales = pyro.param(
         "mu_team_scale",
-        torch.tensor(0.1).expand(2),  # , nt),
+        torch.tensor(0.1).expand(2, nt),
         constraint=constraints.positive,
     )
 
@@ -101,12 +99,22 @@ def guide(home_id, away_id, score1_obs=None, score2_obs=None):
         pyro.sample("defend", dist.Normal(mu_team_locs[1], mu_team_scales[1]))
 
 
-svi = SVI(model=model, guide=guide, optim=Adam({"lr": 0.001}), loss=Trace_ELBO())
-# %%
+# svi setup
+num_iterations = 2000
+initial_lr = 0.1
+gamma = 0.01  # final learning rate will be gamma * initial_lr
+lrd = gamma ** (1 / num_iterations)
+
+svi = SVI(
+    model=model,
+    guide=guide,
+    optim=ClippedAdam({"lr": initial_lr, "lrd": lrd}),
+    loss=Trace_ELBO(),
+)
+
 pyro.clear_param_store()  # clear global parameter cache
 pyro.set_rng_seed(1)
 
-num_iterations = 1000
 advi_loss = []
 for j in range(num_iterations):
     # calculate the loss and take a gradient step
@@ -121,7 +129,7 @@ for j in range(num_iterations):
         print("[iteration %4d] loss: %.4f" % (j + 1, loss))
 
 
-# %%
+# Get posterior
 for i in pyro.get_param_store().items():
     print(i)
 
@@ -129,9 +137,6 @@ fit = Predictive(model=model, guide=guide, num_samples=2000)(
     home_id=train["Home_id"].values, away_id=train["Away_id"].values
 )
 
-fit["home"]
-
-# %%
 # Attack and defence
 quality = teams.copy()
 quality = quality.assign(
@@ -185,7 +190,6 @@ p.add_tools(hover)
 
 show(p)
 
-# %%
 # Predicted goals and table
 predict = df[df["split"] == "predict"]
 
@@ -211,7 +215,6 @@ predicted_full = train.append(
 )
 
 
-# %%
 def score_table(df):
     """Function to convert football match dataframe to a table
 
@@ -254,5 +257,3 @@ def score_table(df):
 
 score_table(pl_data)
 score_table(predicted_full)
-
-# %%

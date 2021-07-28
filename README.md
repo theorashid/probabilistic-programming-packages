@@ -9,11 +9,11 @@ Implemented:
 - [`brms`](https://paul-buerkner.github.io/brms/)
 - [`INLA`](https://www.r-inla.org)
 - [`PyMC3`](http://docs.pymc.io)
+- [`pyro`](http://pyro.ai)
 - [`numpyro`](http://num.pyro.ai/)
 - [`Turing`](https://turing.ml/)
 
 To do:
-- [`pyro`](http://pyro.ai)
 - [`tensorflow_probability`](https://www.tensorflow.org/probability/)
 - [`edward2`](https://github.com/google/edward2)
 - [`Gen`](https://www.gen.dev)
