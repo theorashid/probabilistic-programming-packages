@@ -136,6 +136,6 @@ pred[!, :score2sd] = summary[npr + 1:end, :std]
 predicted_full = vcat(select(train, [:Round, :Home, :score1, :score2, :Away]), select(pred, [:Round, :Home, :score1, :score2, :Away]))
 
 #  Final table – see how well the model predicts the final 50 games
-include("utils/score_table.jl")
+include("models/julia/utils.jl")
 score_table(pl_data)
 score_table(predicted_full)
