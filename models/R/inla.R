@@ -93,7 +93,7 @@ predicted_full <- left_join(
     select(Round, Home, score1, score2, Away)
 
 # Final table – see how well the model predicts the final 50 games
-source("utils/score_table.R")
+source("models/R/utils.R")
 score_table(pl_data)
 score_table(predicted_full)
 

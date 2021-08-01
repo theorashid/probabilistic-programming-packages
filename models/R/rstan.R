@@ -94,6 +94,6 @@ predicted_full <- bind_rows(
     mutate(score1 = round(score1), score2 = round(score2))
 
 # Final table – see how well the model predicts the final 50 games
-source("utils/score_table.R")
+source("models/R/utils.R")
 score_table(pl_data)
 score_table(predicted_full)
