@@ -26,9 +26,9 @@ data <- data %>%
 code <- nimbleCode({
     # priors
     mu_att ~ dnorm(0, sd = 1)
-    sd_att ~ dt(mu = 0, sigma = 2.5, df = 3)
+    sd_att ~ T(dt(mu = 0, sigma = 2.5, df = 3), 0, Inf)
     mu_def ~ dnorm(0, sd = 1)
-    sd_def ~ dt(mu = 0, sigma = 2.5, df = 3)
+    sd_def ~ T(dt(mu = 0, sigma = 2.5, df = 3), 0, Inf)
 
     home ~ dnorm(0, sd = 1) # home advantage
 
