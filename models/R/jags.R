@@ -69,8 +69,15 @@ fit <- jags.parallel(
 samples <- fit$BUGSoutput$sims.matrix %>% as_tibble()
 
 # Plot posterior
-mcmc_intervals(samples, pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"))
-mcmc_trace(samples, pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"), facet_args = list(ncol = 1))
+mcmc_intervals(
+    samples,
+    pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home")
+)
+mcmc_trace(
+    samples,
+    pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"),
+    facet_args = list(ncol = 1)
+)
 
 team_values <- samples %>% select(-c(mu_att, mu_def, sd_att, sd_def, home))
 
@@ -108,7 +115,9 @@ predicted <- data %>%
     )
 
 predicted_full <- bind_rows(
-    data %>% filter(split == "train") %>% select(Round, Home, score1, score2, Away),
+    data %>%
+        filter(split == "train") %>%
+        select(Round, Home, score1, score2, Away),
     predicted %>% select(Round, Home, score1, score2, Away)
 ) %>%
     mutate(score1 = round(score1), score2 = round(score2))

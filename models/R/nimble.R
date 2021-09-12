@@ -5,19 +5,24 @@ library(bayesplot)
 set.seed(1)
 
 pl_data <- read_csv("data/premierleague.csv")
-data    <- pl_data
+data <- pl_data
 
-ng    <- nrow(data) # number of games
-nt    <- data %>% pull(Home) %>% n_distinct() # number of teams
-teams <- data %>% pull(Home) %>% unique() %>% sort() # names of the teams
+ng <- nrow(data) # number of games
+nt <- data %>%
+    pull(Home) %>%
+    n_distinct() # number of teams
+teams <- data %>%
+    pull(Home) %>%
+    unique() %>%
+    sort() # names of the teams
 
-data <- data %>% 
+data <- data %>%
     mutate(
         Home.id = data %>% group_by(Home) %>% group_indices(),
         Away.id = data %>% group_by(Away) %>% group_indices()
     )
 
-np   <- 50 # predict the last 5 rounds of games
+np <- 50 # predict the last 5 rounds of games
 ngob <- ng - np # number of games to train
 
 data <- data %>%
@@ -38,7 +43,7 @@ code <- nimbleCode({
     }
 
     # likelihood
-    for(i in 1:ng) {
+    for (i in 1:ng) {
         theta1[i] <- exp(home + att[ht[i]] - def[at[i]])
         theta2[i] <- exp(att[at[i]] - def[ht[i]])
 
@@ -47,7 +52,7 @@ code <- nimbleCode({
     }
 
     # predict new games
-    for(i in 1:np) {
+    for (i in 1:np) {
         theta1new[i] <- exp(home + att[htnew[i]] - def[atnew[i]])
         theta2new[i] <- exp(att[atnew[i]] - def[htnew[i]])
 
@@ -57,25 +62,25 @@ code <- nimbleCode({
 })
 
 model_constants <- list(
-    nt = nt, 
+    nt = nt,
     ng = ngob,
-    ht = data %>% filter(split == "train") %>% pull(Home.id), 
+    ht = data %>% filter(split == "train") %>% pull(Home.id),
     at = data %>% filter(split == "train") %>% pull(Away.id),
     np = np,
     htnew = data %>% filter(split == "predict") %>% pull(Home.id),
     atnew = data %>% filter(split == "predict") %>% pull(Away.id)
 )
 
-model_data <- list( 
+model_data <- list(
     s1 = data %>% filter(split == "train") %>% pull(score1),
     s2 = data %>% filter(split == "train") %>% pull(score2)
 )
 
 model_inits <- list(
-    "mu_att" = 0.09, 
-    "mu_def" = 0.00, 
-    "sd_att" = 0.30, 
-    "sd_def" = 0.19, 
+    "mu_att" = 0.09,
+    "mu_def" = 0.00,
+    "sd_att" = 0.30,
+    "sd_def" = 0.19,
     "home"   = 0.24
 )
 
@@ -91,12 +96,12 @@ Cmodel <- compileNimble(model)
 mcmcConf <- configureMCMC(
     model = Cmodel,
     monitors = c(
-        "mu_att", "mu_def", 
-        "sd_att", "sd_def", 
+        "mu_att", "mu_def",
+        "sd_att", "sd_def",
         "home", "att", "def",
         "s1new", "s2new"
     ),
-    thin  = 1,
+    thin = 1,
     print = TRUE
 )
 
@@ -114,8 +119,15 @@ fit <- runMCMC(
 samples <- do.call(rbind, fit) %>% as_tibble() # stack chains
 
 # Plot posterior
-mcmc_intervals(samples, pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"))
-mcmc_trace(samples, pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"), facet_args = list(ncol = 1))
+mcmc_intervals(
+    samples,
+    pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home")
+)
+mcmc_trace(
+    samples,
+    pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"),
+    facet_args = list(ncol = 1)
+)
 
 team_values <- samples %>% select(-c(mu_att, mu_def, sd_att, sd_def, home))
 
@@ -130,8 +142,8 @@ quality <- tibble(
 
 quality %>%
     ggplot(aes(
-        x = attack, y = defence, 
-        xmin = attack  - attacksd,  xmax = attack  + attacksd,
+        x = attack, y = defence,
+        xmin = attack - attacksd, xmax = attack + attacksd,
         ymin = defence - defencesd, ymax = defence + defencesd,
         label = Team
     )) +
@@ -153,12 +165,14 @@ predicted <- data %>%
     )
 
 predicted_full <- bind_rows(
-    data %>% filter(split == "train") %>% select(Round, Home, score1, score2, Away),
+    data %>%
+        filter(split == "train") %>%
+        select(Round, Home, score1, score2, Away),
     predicted %>% select(Round, Home, score1, score2, Away)
 ) %>%
-    mutate(score1 = round(score1), score2 = round(score2)) 
+    mutate(score1 = round(score1), score2 = round(score2))
 
-# Final table – see how well the model predicts the final 50 games
+#  Final table – see how well the model predicts the final 50 games
 source("models/R/utils.R")
 score_table(pl_data)
 score_table(predicted_full)

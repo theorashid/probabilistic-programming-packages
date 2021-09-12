@@ -6,29 +6,34 @@ set.seed(1)
 options(mc.cores = 2)
 
 pl_data <- read_csv("data/premierleague.csv")
-data    <- pl_data
+data <- pl_data
 
-ng    <- nrow(data) # number of games
-nt    <- data %>% pull(Home) %>% n_distinct() # number of teams
-teams <- data %>% pull(Home) %>% unique() %>% sort() # names of the teams
+ng <- nrow(data) # number of games
+nt <- data %>%
+    pull(Home) %>%
+    n_distinct() # number of teams
+teams <- data %>%
+    pull(Home) %>%
+    unique() %>%
+    sort() # names of the teams
 
-data <- data %>% 
+data <- data %>%
     mutate(
         Home.id = data %>% group_by(Home) %>% group_indices(),
         Away.id = data %>% group_by(Away) %>% group_indices()
     )
 
-np   <- 50 # predict the last 5 rounds of games
+np <- 50 # predict the last 5 rounds of games
 ngob <- ng - np # number of games to train
 
 data <- data %>%
     mutate(split = ifelse(row_number() <= ngob, "train", "predict"))
 
 inputs <- list(
-    nt = nt, 
+    nt = nt,
     ng = ngob,
-    ht = data %>% filter(split == "train") %>% pull(Home.id), 
-    at = data %>% filter(split == "train") %>% pull(Away.id), 
+    ht = data %>% filter(split == "train") %>% pull(Home.id),
+    at = data %>% filter(split == "train") %>% pull(Away.id),
     s1 = data %>% filter(split == "train") %>% pull(score1),
     s2 = data %>% filter(split == "train") %>% pull(score2),
     np = np,
@@ -37,7 +42,7 @@ inputs <- list(
 )
 
 fit <- stan(
-    file   = "models/R/stan.stan", 
+    file   = "models/R/stan.stan",
     data   = inputs,
     iter   = 15000,
     warmup = 5000,
@@ -48,8 +53,15 @@ fit <- stan(
 # Plot posterior
 posterior <- as.array(fit)
 dimnames(posterior)
-mcmc_intervals(posterior, pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"))
-mcmc_trace(posterior, pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"), facet_args = list(ncol = 1))
+mcmc_intervals(
+    posterior,
+    pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home")
+)
+mcmc_trace(
+    posterior,
+    pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"),
+    facet_args = list(ncol = 1)
+)
 
 # Extract samples
 samples <- fit %>% extract()
@@ -65,8 +77,8 @@ quality <- tibble(
 
 quality %>%
     ggplot(aes(
-        x = attack, y = defence, 
-        xmin = attack  - attacksd,  xmax = attack  + attacksd,
+        x = attack, y = defence,
+        xmin = attack - attacksd, xmax = attack + attacksd,
         ymin = defence - defencesd, ymax = defence + defencesd,
         label = Team
     )) +
@@ -88,12 +100,14 @@ predicted <- data %>%
     )
 
 predicted_full <- bind_rows(
-    data %>% filter(split == "train") %>% select(Round, Home, score1, score2, Away),
+    data %>%
+        filter(split == "train") %>%
+        select(Round, Home, score1, score2, Away),
     predicted %>% select(Round, Home, score1, score2, Away)
 ) %>%
     mutate(score1 = round(score1), score2 = round(score2))
 
-# Final table – see how well the model predicts the final 50 games
+#  Final table – see how well the model predicts the final 50 games
 source("models/R/utils.R")
 score_table(pl_data)
 score_table(predicted_full)
