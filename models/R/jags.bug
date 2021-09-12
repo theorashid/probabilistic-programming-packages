@@ -1,0 +1,32 @@
+model {
+    # priors
+    mu_att ~ dnorm(0, 1)
+    sd_att ~ dt(0, pow(2.5,-2), 3) T(0,)
+    mu_def ~ dnorm(0, 1)
+    sd_def ~ dt(0, pow(2.5,-2), 3) T(0,)
+
+    home ~ dnorm(0, 1) # home advantage
+
+    for (i in 1:nt) {
+        att[i] ~ dnorm(mu_att, sd_att)
+        def[i] ~ dnorm(mu_def, sd_def)
+    }
+
+    # likelihood
+    for (i in 1:ng) {
+        theta1[i] <- exp(home + att[ht[i]] - def[at[i]])
+        theta2[i] <- exp(att[at[i]] - def[ht[i]])
+
+        s1[i] ~ dpois(theta1[i])
+        s2[i] ~ dpois(theta2[i])
+    }
+
+    # predict new games
+    for (i in 1:np) {
+        theta1new[i] <- exp(home + att[htnew[i]] - def[atnew[i]])
+        theta2new[i] <- exp(att[atnew[i]] - def[htnew[i]])
+
+        s1new[i] ~ dpois(theta1new[i])
+        s2new[i] ~ dpois(theta1new[i])
+    }
+}

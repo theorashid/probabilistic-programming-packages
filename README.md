@@ -5,6 +5,7 @@ Trying out different probabilistic programming packages on the same statistical 
 Implemented:
 - [`rstan`](https://mc-stan.org/rstan/)
 - [`nimble`](https://r-nimble.org)
+- [`JAGS`](https://mcmc-jags.sourceforge.io)
 - [`rstanarm`](https://mc-stan.org/rstanarm/)
 - [`brms`](https://paul-buerkner.github.io/brms/)
 - [`INLA`](https://www.r-inla.org)
