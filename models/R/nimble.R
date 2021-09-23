@@ -30,34 +30,24 @@ data <- data %>%
 
 code <- nimbleCode({
     # priors
-    mu_att ~ dnorm(0, sd = 1)
+    alpha ~ dnorm(0, sd = 1)
     sd_att ~ T(dt(mu = 0, sigma = 2.5, df = 3), 0, Inf)
-    mu_def ~ dnorm(0, sd = 1)
     sd_def ~ T(dt(mu = 0, sigma = 2.5, df = 3), 0, Inf)
 
     home ~ dnorm(0, sd = 1) # home advantage
 
     for (i in 1:nt) {
-        att[i] ~ dnorm(mu_att, sd = sd_att)
-        def[i] ~ dnorm(mu_def, sd = sd_def)
+        att[i] ~ dnorm(0, sd = sd_att)
+        def[i] ~ dnorm(0, sd = sd_def)
     }
 
     # likelihood
     for (i in 1:ng) {
-        theta1[i] <- exp(home + att[ht[i]] - def[at[i]])
-        theta2[i] <- exp(att[at[i]] - def[ht[i]])
+        theta1[i] <- exp(alpha + home + att[ht[i]] - def[at[i]])
+        theta2[i] <- exp(alpha + att[at[i]] - def[ht[i]])
 
         s1[i] ~ dpois(theta1[i])
         s2[i] ~ dpois(theta2[i])
-    }
-
-    # predict new games
-    for (i in 1:np) {
-        theta1new[i] <- exp(home + att[htnew[i]] - def[atnew[i]])
-        theta2new[i] <- exp(att[atnew[i]] - def[htnew[i]])
-
-        s1new[i] ~ dpois(theta1new[i])
-        s2new[i] ~ dpois(theta1new[i])
     }
 })
 
@@ -65,10 +55,7 @@ model_constants <- list(
     nt = nt,
     ng = ngob,
     ht = data %>% filter(split == "train") %>% pull(Home.id),
-    at = data %>% filter(split == "train") %>% pull(Away.id),
-    np = np,
-    htnew = data %>% filter(split == "predict") %>% pull(Home.id),
-    atnew = data %>% filter(split == "predict") %>% pull(Away.id)
+    at = data %>% filter(split == "train") %>% pull(Away.id)
 )
 
 model_data <- list(
@@ -77,8 +64,7 @@ model_data <- list(
 )
 
 model_inits <- list(
-    "mu_att" = 0.09,
-    "mu_def" = 0.00,
+    "alpha"  = 0.1,
     "sd_att" = 0.30,
     "sd_def" = 0.19,
     "home"   = 0.24
@@ -96,10 +82,9 @@ Cmodel <- compileNimble(model)
 mcmcConf <- configureMCMC(
     model = Cmodel,
     monitors = c(
-        "mu_att", "mu_def",
+        "alpha", "home",
         "sd_att", "sd_def",
-        "home", "att", "def",
-        "s1new", "s2new"
+        "att", "def"
     ),
     thin = 1,
     print = TRUE
@@ -121,15 +106,15 @@ samples <- do.call(rbind, fit) %>% as_tibble() # stack chains
 # Plot posterior
 mcmc_intervals(
     samples,
-    pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home")
+    pars = c("alpha", "home", "sd_att", "sd_def")
 )
 mcmc_trace(
     samples,
-    pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"),
+    pars = c("alpha", "home", "sd_att", "sd_def"),
     facet_args = list(ncol = 1)
 )
 
-team_values <- samples %>% select(-c(mu_att, mu_def, sd_att, sd_def, home))
+team_values <- samples %>% select(-c(alpha, sd_att, sd_def, home))
 
 # Attack and defence
 quality <- tibble(
@@ -154,14 +139,40 @@ quality %>%
     theme_minimal()
 
 # Predicted goals and table
+# Simulate from the posterior to get predicted scores
+predicted <- data %>% filter(split == "predict")
+
+s1 <- c()
+s2 <- c()
+for (i in 1:np) {
+    h <- predicted[i, ] %>% pull(Home.id)
+    a <- predicted[i, ] %>% pull(Away.id)
+
+    theta1 <- exp(
+        samples$alpha + samples$home +
+            pull(samples, paste0("att[", h, "]")) -
+            pull(samples, paste0("def[", a, "]"))
+    )
+    theta2 <- exp(
+        samples$alpha +
+            pull(samples, paste0("att[", a, "]")) -
+            pull(samples, paste0("def[", h, "]"))
+    )
+
+    s1 <- c(s1, rpois(length(theta1), theta1))
+    s2 <- c(s2, rpois(length(theta2), theta2))
+}
+s1 <- matrix(s1, ncol = np) #  iterations are rows, columns are parameters
+s2 <- matrix(s2, ncol = np)
+
 predicted <- data %>%
     filter(split == "predict") %>%
     mutate(score1true = score1, score2true = score2) %>%
     mutate(
-        score1      = team_values %>% select(matches("s1new")) %>% colMeans(),
-        score1error = team_values %>% select(matches("s1new")) %>% apply(2, sd),
-        score2      = team_values %>% select(matches("s2new")) %>% colMeans(),
-        score2error = team_values %>% select(matches("s2new")) %>% apply(2, sd),
+        score1      = s1 %>% colMeans(),
+        score1error = s1 %>% apply(2, sd),
+        score2      = s2 %>% colMeans(),
+        score2error = s2 %>% apply(2, sd),
     )
 
 predicted_full <- bind_rows(

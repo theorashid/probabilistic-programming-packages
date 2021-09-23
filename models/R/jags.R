@@ -33,17 +33,13 @@ jags_data <- list(
     ng = ngob,
     ht = data %>% filter(split == "train") %>% pull(Home.id),
     at = data %>% filter(split == "train") %>% pull(Away.id),
-    np = np,
-    htnew = data %>% filter(split == "predict") %>% pull(Home.id),
-    atnew = data %>% filter(split == "predict") %>% pull(Away.id),
     s1 = data %>% filter(split == "train") %>% pull(score1),
     s2 = data %>% filter(split == "train") %>% pull(score2)
 )
 
 jags_inits <- function() {
     list(
-        "mu_att" = 0.09,
-        "mu_def" = 0.00,
+        "alpha"  = 0.10,
         "sd_att" = 0.30,
         "sd_def" = 0.19,
         "home"   = 0.24
@@ -54,9 +50,9 @@ fit <- jags.parallel(
     data = jags_data,
     inits = jags_inits,
     parameters.to.save = c(
-        "mu_att", "mu_def",
+        "alpha", "home",
         "sd_att", "sd_def",
-        "home", "att", "def",
+        "att", "def",
         "s1new", "s2new"
     ),
     n.iter = 15000,
@@ -71,15 +67,15 @@ samples <- fit$BUGSoutput$sims.matrix %>% as_tibble()
 # Plot posterior
 mcmc_intervals(
     samples,
-    pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home")
+    pars = c("alpha", "home", "sd_att", "sd_def")
 )
 mcmc_trace(
     samples,
-    pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"),
+    pars = c("alpha", "home", "sd_att", "sd_def"),
     facet_args = list(ncol = 1)
 )
 
-team_values <- samples %>% select(-c(mu_att, mu_def, sd_att, sd_def, home))
+team_values <- samples %>% select(-c(alpha, sd_att, sd_def, home))
 
 # Attack and defence
 quality <- tibble(
@@ -104,14 +100,40 @@ quality %>%
     theme_minimal()
 
 # Predicted goals and table
+# Simulate from the posterior to get predicted scores
+predicted <- data %>% filter(split == "predict")
+
+s1 <- c()
+s2 <- c()
+for (i in 1:np) {
+    h <- predicted[i, ] %>% pull(Home.id)
+    a <- predicted[i, ] %>% pull(Away.id)
+
+    theta1 <- exp(
+        samples$alpha + samples$home +
+            pull(samples, paste0("att[", h, "]")) -
+            pull(samples, paste0("def[", a, "]"))
+    )
+    theta2 <- exp(
+        samples$alpha +
+            pull(samples, paste0("att[", a, "]")) -
+            pull(samples, paste0("def[", h, "]"))
+    )
+
+    s1 <- c(s1, rpois(length(theta1), theta1))
+    s2 <- c(s2, rpois(length(theta2), theta2))
+}
+s1 <- matrix(s1, ncol = np) #  iterations are rows, columns are parameters
+s2 <- matrix(s2, ncol = np)
+
 predicted <- data %>%
     filter(split == "predict") %>%
     mutate(score1true = score1, score2true = score2) %>%
     mutate(
-        score1      = team_values %>% select(matches("s1new")) %>% colMeans(),
-        score1error = team_values %>% select(matches("s1new")) %>% apply(2, sd),
-        score2      = team_values %>% select(matches("s2new")) %>% colMeans(),
-        score2error = team_values %>% select(matches("s2new")) %>% apply(2, sd),
+        score1      = s1 %>% colMeans(),
+        score1error = s1 %>% apply(2, sd),
+        score2      = s2 %>% colMeans(),
+        score2error = s2 %>% apply(2, sd),
     )
 
 predicted_full <- bind_rows(
