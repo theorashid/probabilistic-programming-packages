@@ -29,9 +29,9 @@ teams["i"] = teams.index
 nt = len(teams)  # number of teams
 
 df = pd.merge(pl_data, teams, left_on="Home", right_on="Team", how="left")
-df = df.rename(columns={"i": "Home_id"}).drop("Team", axis=11)
+df = df.rename(columns={"i": "Home_id"}).drop("Team", axis=1)
 df = pd.merge(df, teams, left_on="Away", right_on="Team", how="left")
-df = df.rename(columns={"i": "Away_id"}).drop("Team", axis=11)
+df = df.rename(columns={"i": "Away_id"}).drop("Team", axis=1)
 
 df["split"] = np.where(df.index + 1 <= ngob, "train", "predict")
 
@@ -40,12 +40,11 @@ train = df[df["split"] == "train"]
 
 def model(home_id, away_id, score1_obs=None, score2_obs=None):
     # priors
-    mu_att = numpyro.sample("mu_att", dist.Normal(0.0, 1.0))
+    alpha = numpyro.sample("alpha", dist.Normal(0.0, 1.0))
     sd_att = numpyro.sample(
         "sd_att",
         dist.FoldedDistribution(dist.StudentT(3.0, 0.0, 2.5)),
     )
-    mu_def = numpyro.sample("mu_def", dist.Normal(0.0, 1.0))
     sd_def = numpyro.sample(
         "sd_def",
         dist.FoldedDistribution(dist.StudentT(3.0, 0.0, 2.5)),
@@ -57,12 +56,12 @@ def model(home_id, away_id, score1_obs=None, score2_obs=None):
 
     # team-specific model parameters
     with numpyro.plate("plate_teams", nt):
-        attack = numpyro.sample("attack", dist.Normal(mu_att, sd_att))
-        defend = numpyro.sample("defend", dist.Normal(mu_def, sd_def))
+        attack = numpyro.sample("attack", dist.Normal(0, sd_att))
+        defend = numpyro.sample("defend", dist.Normal(0, sd_def))
 
     # likelihood
-    theta1 = jnp.exp(home + attack[home_id] - defend[away_id])
-    theta2 = jnp.exp(attack[away_id] - defend[home_id])
+    theta1 = jnp.exp(alpha + home + attack[home_id] - defend[away_id])
+    theta2 = jnp.exp(alpha + attack[away_id] - defend[home_id])
 
     with numpyro.plate("data", len(home_id)):
         numpyro.sample("s1", dist.Poisson(theta1), obs=score1_obs)
@@ -86,13 +85,11 @@ fit = az.from_numpyro(mcmc)
 # Plot posterior
 az.plot_forest(
     fit,
-    var_names=("mu_att", "mu_def", "sd_att", "sd_def", "home"),
+    var_names=("alpha", "home", "sd_att", "sd_def"),
     backend="bokeh",
 )
 
-az.plot_trace(
-    fit, var_names=("mu_att", "mu_def", "sd_att", "sd_def", "home"), backend="bokeh"
-)
+az.plot_trace(fit, var_names=("alpha", "home", "sd_att", "sd_def"), backend="bokeh")
 
 fit = mcmc.get_samples()
 

@@ -23,9 +23,9 @@ teams["i"] = teams.index
 nt = len(teams)  # number of teams
 
 df = pd.merge(pl_data, teams, left_on="Home", right_on="Team", how="left")
-df = df.rename(columns={"i": "Home_id"}).drop("Team", axis=11)
+df = df.rename(columns={"i": "Home_id"}).drop("Team", axis=1)
 df = pd.merge(df, teams, left_on="Away", right_on="Team", how="left")
-df = df.rename(columns={"i": "Away_id"}).drop("Team", axis=11)
+df = df.rename(columns={"i": "Away_id"}).drop("Team", axis=1)
 
 df["split"] = np.where(df.index + 1 <= ngob, "train", "predict")
 
@@ -33,24 +33,23 @@ train = df[df["split"] == "train"]
 
 with pm.Model() as model:
     # priors
-    mu_att = pm.Normal("mu_att", mu=0, sigma=1)
+    alpha = pm.Normal("alpha", mu=0, sigma=1)
     sd_att = pm.HalfStudentT("sd_att", nu=3, sigma=2.5)
-    mu_def = pm.Normal("mu_def", mu=0, sigma=1)
     sd_def = pm.HalfStudentT("sd_def", nu=3, sigma=2.5)
 
     home = pm.Normal("home", mu=0, sigma=1)  # home advantage
 
     # team-specific model parameters
-    attack = pm.Normal("attack", mu=mu_att, sigma=sd_att, shape=nt)
-    defend = pm.Normal("defend", mu=mu_def, sigma=sd_def, shape=nt)
+    attack = pm.Normal("attack", mu=0, sigma=sd_att, shape=nt)
+    defend = pm.Normal("defend", mu=0, sigma=sd_def, shape=nt)
 
     # data
     home_id = pm.Data("home_data", train["Home_id"])
     away_id = pm.Data("away_data", train["Away_id"])
 
     # likelihood
-    theta1 = tt.exp(home + attack[home_id] - defend[away_id])
-    theta2 = tt.exp(attack[away_id] - defend[home_id])
+    theta1 = tt.exp(alpha + home + attack[home_id] - defend[away_id])
+    theta2 = tt.exp(alpha + attack[away_id] - defend[home_id])
 
     s1 = pm.Poisson("s1", mu=theta1, observed=train["score1"])
     s2 = pm.Poisson("s2", mu=theta2, observed=train["score2"])
@@ -61,13 +60,11 @@ with model:
 # Plot posterior
 az.plot_forest(
     fit,
-    var_names=("mu_att", "mu_def", "sd_att", "sd_def", "home"),
+    var_names=("alpha", "home", "sd_att", "sd_def"),
     backend="bokeh",
 )
 
-az.plot_trace(
-    fit, var_names=("mu_att", "mu_def", "sd_att", "sd_def", "home"), backend="bokeh"
-)
+az.plot_trace(fit, var_names=("alpha", "home", "sd_att", "sd_def"), backend="bokeh")
 
 # Attack and defence
 quality = teams.copy()
