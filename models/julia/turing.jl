@@ -33,20 +33,19 @@ train = df[df.split .== "train", :]
 
 @model model(s1, s2, home_id, away_id; nt=length(unique(home_id))) = begin
     # priors
-    μ_att ~ Normal(0, 1)
+    α ~ Normal(0, 1)
     σ_att ~ truncated(LocationScale(0.0, 2.5, TDist(3)), 0, Inf)
-    μ_def ~ Normal(0, 1)
     σ_def ~ truncated(LocationScale(0.0, 2.5, TDist(3)), 0, Inf)
 
     home ~ Normal(0, 1) # home advantage
 
     # team-specific model parameters
-    attack ~ filldist(Normal(μ_att, σ_att), nt)
-    defend ~ filldist(Normal(μ_def, σ_def), nt)
+    attack ~ filldist(Normal(0, σ_att), nt)
+    defend ~ filldist(Normal(0, σ_def), nt)
 
     # Likelihood
-    θ_1 = @. exp(home + attack[home_id] - defend[away_id])
-    θ_2 = @. exp(attack[away_id] - defend[home_id])
+    θ_1 = @. exp(α + home + attack[home_id] - defend[away_id])
+    θ_2 = @. exp(α + attack[away_id] - defend[home_id])
 
     s1 ~ arraydist(Poisson.(θ_1))
     s2 ~ arraydist(Poisson.(θ_2))
@@ -75,13 +74,13 @@ m = model(
 # Plot posterior
 plot_forest(
     fit,
-    var_names=("μ_att", "μ_def", "σ_att", "σ_def", "home")
+    var_names=("α", "home", "σ_att", "σ_def")
 );
 gcf()
 
 plot_trace(
     fit,
-    var_names=("μ_att", "μ_def", "σ_att", "σ_def", "home")
+    var_names=("α", "home", "σ_att", "σ_def")
 );
 gcf()
 
@@ -136,6 +135,6 @@ pred[!, :score2sd] = summary[npr + 1:end, :std]
 predicted_full = vcat(select(train, [:Round, :Home, :score1, :score2, :Away]), select(pred, [:Round, :Home, :score1, :score2, :Away]))
 
 #  Final table – see how well the model predicts the final 50 games
-include("models/julia/utils.jl")
+include("utils.jl")
 score_table(pl_data)
 score_table(predicted_full)
