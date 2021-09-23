@@ -26,9 +26,9 @@ teams["i"] = teams.index
 nt = len(teams)  # number of teams
 
 df = pd.merge(pl_data, teams, left_on="Home", right_on="Team", how="left")
-df = df.rename(columns={"i": "Home_id"}).drop("Team", axis=11)
+df = df.rename(columns={"i": "Home_id"}).drop("Team", axis=1)
 df = pd.merge(df, teams, left_on="Away", right_on="Team", how="left")
-df = df.rename(columns={"i": "Away_id"}).drop("Team", axis=11)
+df = df.rename(columns={"i": "Away_id"}).drop("Team", axis=1)
 
 df["split"] = np.where(df.index + 1 <= ngob, "train", "predict")
 
@@ -42,12 +42,11 @@ class FoldedTransform(dist.transforms.AbsTransform):
 
 def model(home_id, away_id, score1_obs=None, score2_obs=None):
     # priors
-    mu_att = pyro.sample("mu_att", dist.Normal(0.0, 1.0))
+    alpha = pyro.sample("alpha", dist.Normal(0.0, 1.0))
     sd_att = pyro.sample(
         "sd_att",
         dist.TransformedDistribution(dist.StudentT(3.0, 0.0, 2.5), FoldedTransform()),
     )
-    mu_def = pyro.sample("mu_def", dist.Normal(0.0, 1.0))
     sd_def = pyro.sample(
         "sd_def",
         dist.TransformedDistribution(dist.StudentT(3.0, 0.0, 2.5), FoldedTransform()),
@@ -59,12 +58,12 @@ def model(home_id, away_id, score1_obs=None, score2_obs=None):
 
     # team-specific model parameters
     with pyro.plate("plate_teams", nt):
-        attack = pyro.sample("attack", dist.Normal(mu_att, sd_att))
-        defend = pyro.sample("defend", dist.Normal(mu_def, sd_def))
+        attack = pyro.sample("attack", dist.Normal(0, sd_att))
+        defend = pyro.sample("defend", dist.Normal(0, sd_def))
 
     # likelihood
-    theta1 = torch.exp(home + attack[home_id] - defend[away_id])
-    theta2 = torch.exp(attack[away_id] - defend[home_id])
+    theta1 = torch.exp(alpha + home + attack[home_id] - defend[away_id])
+    theta2 = torch.exp(alpha + attack[away_id] - defend[home_id])
 
     with pyro.plate("data", len(home_id)):
         pyro.sample("s1", dist.Poisson(theta1), obs=score1_obs)
@@ -72,16 +71,15 @@ def model(home_id, away_id, score1_obs=None, score2_obs=None):
 
 
 def guide(home_id, away_id, score1_obs=None, score2_obs=None):
-    mu_locs = pyro.param("mu_loc", torch.tensor(0.0).expand(5))
+    mu_locs = pyro.param("mu_loc", torch.tensor(0.0).expand(4))
     mu_scales = pyro.param(
-        "mu_scale", torch.tensor(0.1).expand(5), constraint=constraints.positive
+        "mu_scale", torch.tensor(0.1).expand(4), constraint=constraints.positive
     )
 
-    pyro.sample("mu_att", dist.Normal(mu_locs[0], mu_scales[0]))
-    pyro.sample("mu_def", dist.Normal(mu_locs[1], mu_scales[1]))
-    pyro.sample("sd_att", dist.LogNormal(mu_locs[2], mu_scales[2]))
-    pyro.sample("sd_def", dist.LogNormal(mu_locs[3], mu_scales[3]))
-    pyro.sample("home", dist.Normal(mu_locs[4], mu_scales[4]))  # home advantage
+    pyro.sample("alpha", dist.Normal(mu_locs[0], mu_scales[0]))
+    pyro.sample("sd_att", dist.LogNormal(mu_locs[1], mu_scales[1]))
+    pyro.sample("sd_def", dist.LogNormal(mu_locs[2], mu_scales[2]))
+    pyro.sample("home", dist.Normal(mu_locs[3], mu_scales[3]))  # home advantage
 
     nt = len(np.unique(home_id))
 
@@ -180,3 +178,5 @@ predicted_full = train.append(
 
 score_table(pl_data)
 score_table(predicted_full)
+
+# %%
