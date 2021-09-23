@@ -37,21 +37,20 @@ train = df[df["split"] == "train"]
 
 def model(home_id, away_id, score1_obs=None, score2_obs=None):
     # priors
-    mu_att = ed.Normal(loc=0.0, scale=1.0, name="mu_att")
+    alpha = ed.Normal(loc=0.0, scale=1.0, name="alpha")
     sd_att = ed.StudenT(df=3.0, loc=0.0, scale=2.5, name="sd_att")
-    mu_def = ed.Normal(loc=0.0, scale=1.0, name="mu_def")
     sd_def = ed.StudenT(df=3.0, loc=0.0, scale=2.5, name="sd_def")
 
     home = ed.Normal(loc=0.0, scale=1.0, name="home")  # home advantage
 
     nt = len(np.unique(home_id))
     # team-specific model parameters
-    attack = ed.Normal(loc=mu_att, scale=sd_att, sample_shape=nt, name="attack")
-    defend = ed.Normal(loc=mu_def, scale=sd_def, sample_shape=nt, name="defend")
+    attack = ed.Normal(loc=0, scale=sd_att, sample_shape=nt, name="attack")
+    defend = ed.Normal(loc=0, scale=sd_def, sample_shape=nt, name="defend")
 
     # likelihood
-    theta1 = tf.exp(home + attack[home_id] - defend[away_id])
-    theta2 = tf.exp(attack[away_id] - defend[home_id])
+    theta1 = tf.exp(alpha + home + attack[home_id] - defend[away_id])
+    theta2 = tf.exp(alpha + attack[away_id] - defend[home_id])
 
     s1 = ed.Poisson(theta1, name="s1")
     s2 = ed.Poisson(theta2, name="s2")
