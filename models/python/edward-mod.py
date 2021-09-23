@@ -26,9 +26,9 @@ teams["i"] = teams.index
 nt = len(teams)  # number of teams
 
 df = pd.merge(pl_data, teams, left_on="Home", right_on="Team", how="left")
-df = df.rename(columns={"i": "Home_id"}).drop("Team", axis=11)
+df = df.rename(columns={"i": "Home_id"}).drop("Team", axis=1)
 df = pd.merge(df, teams, left_on="Away", right_on="Team", how="left")
-df = df.rename(columns={"i": "Away_id"}).drop("Team", axis=11)
+df = df.rename(columns={"i": "Away_id"}).drop("Team", axis=1)
 
 df["split"] = np.where(df.index + 1 <= ngob, "train", "predict")
 
