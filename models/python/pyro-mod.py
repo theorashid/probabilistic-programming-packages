@@ -178,5 +178,3 @@ predicted_full = train.append(
 
 score_table(pl_data)
 score_table(predicted_full)
-
-# %%
