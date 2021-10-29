@@ -20,3 +20,4 @@ dependencies:
     - tensorflow
     - tensorflow-probability
     # - edward2
+    - blackjax

@@ -15,6 +15,7 @@ Implemented:
 - [`Turing`](https://turing.ml/)
 
 To do:
+- [`blackjax`](https://github.com/blackjax-devs/blackjax)
 - [`tensorflow_probability`](https://www.tensorflow.org/probability/)
 - [`edward2`](https://github.com/google/edward2)
 - [`Gen`](https://www.gen.dev)
