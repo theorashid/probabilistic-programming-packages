@@ -1,5 +1,19 @@
 # probabilistic-programming-packages
-Trying out different probabilistic programming packages on the same statistical model
+Trying out different probabilistic programming languages on the same statistical model.
+
+## _Current_ results
+These are __very__ preliminary results based on the minimum effective sample size (ESS) across all parameters. All PPLs were run in Colab. More PPLs will be added, models and evaluation metrics will be improved by collaborating with devs, and the hardware will be swapped out for something more consistent.
+
+Please get in touch if you'd like to help with this project, either [here](mailto:theoaorashid@gmail.com?subject=ppl%20project), [here](https://twitter.com/theorashid), or (even better) create a pull request. See [this post](https://theorashid.github.io/post/ppl-benchmark-help/) for more information.
+
+PPL     | compile time (s) | CPU ESS/second | GPU ESS/second
+------- | ---------------- | -------------- | --------------
+stan    | 14.8             | 181.1          | –
+nimble  | 7.7              | 24.2           | –
+JAGS    | 5.0              | 286.3          | –
+PyMC    | 8.8              | 63.8           | –
+numpyro | 7.2              | 293.8          | 10.9
+Turing  | 14.9             | 16.3           | –
 
 ## Packages
 Implemented:
@@ -15,12 +29,13 @@ Implemented:
 - [`Turing`](https://turing.ml/)
 
 To do:
-- [`blackjax`](https://github.com/blackjax-devs/blackjax)
 - [`tensorflow_probability`](https://www.tensorflow.org/probability/)
 - [`Bean Machine`](https://beanmachine.org/)
 - [`edward2`](https://github.com/google/edward2)
 - [`Gen`](https://www.gen.dev)
 - [`Soss`](https://cscherrer.github.io/Soss.jl/stable/)
+- [`MCX`](https://github.com/rlouf/mcx)
+- [`blackjax`](https://github.com/blackjax-devs/blackjax)
 
 ## Model
 We fit a hierarchical model to predict football results over a Premier League season. The idea is taken from the Stan's video on [Hierarchical Modelling in Stan: Predicting the Premier League](https://www.youtube.com/watch?v=dNZQrcAjgXQ), which itself is inspired by the paper [Bayesian hierarchical model for the prediction of
