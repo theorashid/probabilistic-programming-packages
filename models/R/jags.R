@@ -52,8 +52,7 @@ fit <- jags.parallel(
     parameters.to.save = c(
         "alpha", "home",
         "sd_att", "sd_def",
-        "att", "def",
-        "s1new", "s2new"
+        "att", "def"
     ),
     n.iter = 15000,
     n.burnin = 5000,
