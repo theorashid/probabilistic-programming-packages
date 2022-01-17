@@ -9,7 +9,7 @@ Please get in touch if you'd like to help with this project, either [here](mailt
 PPL     | compile time (s) | CPU ESS/second | GPU ESS/second
 ------- | ---------------- | -------------- | --------------
 stan    | 14.8             | 181.1          | –
-nimble  | 7.7              | 24.2           | –
+nimble  | 7.7              | 46.2           | –
 JAGS    | 5.0              | 405.9          | –
 PyMC    | 8.8              | 63.8           | –
 numpyro | 7.2              | 293.8          | 10.9

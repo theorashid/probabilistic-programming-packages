@@ -86,6 +86,7 @@ mcmcConf <- configureMCMC(
         "sd_att", "sd_def",
         "att", "def"
     ),
+    onlySlice = TRUE,
     thin = 1,
     print = TRUE
 )
