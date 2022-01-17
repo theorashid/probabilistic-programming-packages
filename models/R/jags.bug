@@ -7,8 +7,8 @@ model {
     home ~ dnorm(0, 1) # home advantage
 
     for (i in 1:nt) {
-        att[i] ~ dnorm(0, sd_att)
-        def[i] ~ dnorm(0, sd_def)
+        att[i] ~ dnorm(0, pow(sd_att,-2))
+        def[i] ~ dnorm(0, pow(sd_def,-2))
     }
 
     # likelihood
