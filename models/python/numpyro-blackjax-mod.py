@@ -1,14 +1,14 @@
 """Run Premier League prediction model using numpyro + blackjax
 """
 
-import pandas as pd
+import jax
+import jax.numpy as jnp
 import numpy as np
 import numpyro
 import numpyro.distributions as dist
-from numpyro.infer.util import initialize_model
-import jax
-import jax.numpy as jnp
+import pandas as pd
 from jax import random
+from numpyro.infer.util import initialize_model
 
 # from functools import partial
 # import blackjax.nuts as nuts

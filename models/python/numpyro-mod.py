@@ -1,14 +1,14 @@
 """Run Premier League prediction model using numpyro
 """
 
-import pandas as pd
+import arviz as az
+import jax.numpy as jnp
 import numpy as np
 import numpyro
 import numpyro.distributions as dist
-from numpyro.infer import MCMC, NUTS, Predictive
-import jax.numpy as jnp
+import pandas as pd
 from jax import random
-import arviz as az
+from numpyro.infer import MCMC, NUTS, Predictive
 from utils import plot_quality, score_table
 
 numpyro.set_platform("cpu")

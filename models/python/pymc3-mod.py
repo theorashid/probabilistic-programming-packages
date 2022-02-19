@@ -1,11 +1,11 @@
 """Run Premier League prediction model using PyMC3
 """
 
-import pandas as pd
+import arviz as az
 import numpy as np
+import pandas as pd
 import pymc3 as pm
 import theano.tensor as tt
-import arviz as az
 from utils import plot_quality, score_table
 
 __author__ = "Theo Rashid"

@@ -1,14 +1,14 @@
 """Run Premier League prediction model using pyro
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pyro
 import pyro.distributions as dist
 import torch
-from torch.distributions import constraints
-from pyro.infer import SVI, Trace_ELBO, Predictive
+from pyro.infer import SVI, Predictive, Trace_ELBO
 from pyro.optim import ClippedAdam
+from torch.distributions import constraints
 from utils import plot_quality, score_table
 
 __author__ = "Theo Rashid"

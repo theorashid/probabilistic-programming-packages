@@ -1,11 +1,11 @@
 """Plotting and football table functions
 """
 
-import pandas as pd
 import numpy as np
-from bokeh.plotting import figure, show
+import pandas as pd
 from bokeh.models import ColumnDataSource, Whisker
 from bokeh.models.tools import HoverTool
+from bokeh.plotting import figure, show
 
 __author__ = "Theo Rashid"
 __email__ = "tar15@ic.ac.uk"
