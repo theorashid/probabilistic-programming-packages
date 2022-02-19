@@ -118,7 +118,8 @@ init_params, potential_fn_gen, *_ = initialize_model(
 #     return states, infos
 
 
-# # Build the kernel using the step size and inverse mass matrix returned from the window adaptation
+# # Build the kernel using the step size
+# and inverse mass matrix returned from the window adaptation
 # kernel = kernel_factory(step_size, inverse_mass_matrix)
 
 # # Sample from the posterior distribution

@@ -1,6 +1,8 @@
 """Run Premier League prediction model using numpyro
 """
 
+import argparse
+
 import arviz as az
 import jax.numpy as jnp
 import numpy as np
@@ -17,25 +19,28 @@ numpyro.set_host_device_count(2)
 __author__ = "Theo Rashid"
 __email__ = "tar15@ic.ac.uk"
 
-pl_data = pd.read_csv("../../data/premierleague.csv")
 
-ng = len(pl_data)  # number of games
-npr = 50  # predict the last 5 rounds of games
-ngob = ng - npr  # number of games to train
+def load_data():
+    pl_data = pd.read_csv("../../data/premierleague.csv")
 
-teams = pl_data["Home"].unique()
-teams = pd.DataFrame(teams, columns=["Team"])
-teams["i"] = teams.index
-nt = len(teams)  # number of teams
+    ng = len(pl_data)  # number of games
+    npr = 50  # predict the last 5 rounds of games
+    ngob = ng - npr  # number of games to train
 
-df = pd.merge(pl_data, teams, left_on="Home", right_on="Team", how="left")
-df = df.rename(columns={"i": "Home_id"}).drop("Team", axis=1)
-df = pd.merge(df, teams, left_on="Away", right_on="Team", how="left")
-df = df.rename(columns={"i": "Away_id"}).drop("Team", axis=1)
+    teams = pl_data["Home"].unique()
+    teams = pd.DataFrame(teams, columns=["Team"])
+    teams["i"] = teams.index
 
-df["split"] = np.where(df.index + 1 <= ngob, "train", "predict")
+    df = pd.merge(pl_data, teams, left_on="Home", right_on="Team", how="left")
+    df = df.rename(columns={"i": "Home_id"}).drop("Team", axis=1)
+    df = pd.merge(df, teams, left_on="Away", right_on="Team", how="left")
+    df = df.rename(columns={"i": "Away_id"}).drop("Team", axis=1)
 
-train = df[df["split"] == "train"]
+    df["split"] = np.where(df.index + 1 <= ngob, "train", "predict")
+
+    print(df.head())
+
+    return teams, df
 
 
 def model(home_id, away_id, score1_obs=None, score2_obs=None):
@@ -68,74 +73,120 @@ def model(home_id, away_id, score1_obs=None, score2_obs=None):
         numpyro.sample("s2", dist.Poisson(theta2), obs=score2_obs)
 
 
-nuts_kernel = NUTS(model)
+def run_inference(model, home_id, away_id, score1, score2, rng_key, args):
+    kernel = NUTS(model)
+    mcmc = MCMC(
+        kernel,
+        num_warmup=args.num_warmup,
+        num_samples=args.num_samples,
+        num_chains=args.num_chains,
+        progress_bar=True,
+    )
+    mcmc.run(rng_key, home_id, away_id, score1, score2)
+    mcmc.print_summary()
+    return mcmc
 
-mcmc = MCMC(nuts_kernel, num_samples=10000, num_warmup=5000, num_chains=2)
-rng_key = random.PRNGKey(0)
-mcmc.run(
-    rng_key,
-    home_id=train["Home_id"].values,
-    away_id=train["Away_id"].values,
-    score1_obs=train["score1"].values,
-    score2_obs=train["score2"].values,
-)
 
-fit = az.from_numpyro(mcmc)
+def main(args):
+    print("Loading data...")
+    teams, df = load_data()
+    train = df[df["split"] == "train"]
 
-# Plot posterior
-az.plot_forest(
-    fit,
-    var_names=("alpha", "home", "sd_att", "sd_def"),
-    backend="bokeh",
-)
+    print("Starting inference...")
+    rng_key = random.PRNGKey(args.rng_seed)
+    mcmc = run_inference(
+        model,
+        train["Home_id"].values,
+        train["Away_id"].values,
+        train["score1"].values,
+        train["score2"].values,
+        rng_key,
+        args,
+    )
 
-az.plot_trace(
-    fit,
-    var_names=("alpha", "home", "sd_att", "sd_def"),
-    backend="bokeh",
-)
+    fit = az.from_numpyro(mcmc)
 
-fit = mcmc.get_samples()
+    print("Analyse posterior...")
+    az.plot_forest(
+        fit,
+        var_names=("alpha", "home", "sd_att", "sd_def"),
+        backend="bokeh",
+    )
 
-# Attack and defence
-quality = teams.copy()
-quality = quality.assign(
-    attack=fit["attack"].mean(axis=0),
-    attacksd=fit["attack"].std(axis=0),
-    defend=fit["defend"].mean(axis=0),
-    defendsd=fit["defend"].std(axis=0),
-)
-quality = quality.assign(
-    attack_low=quality["attack"] - quality["attacksd"],
-    attack_high=quality["attack"] + quality["attacksd"],
-    defend_low=quality["defend"] - quality["defendsd"],
-    defend_high=quality["defend"] + quality["defendsd"],
-)
+    az.plot_trace(
+        fit,
+        var_names=("alpha", "home", "sd_att", "sd_def"),
+        backend="bokeh",
+    )
 
-plot_quality(quality)
+    fit = mcmc.get_samples()
 
-# Predicted goals and table
-predict = df[df["split"] == "predict"]
+    # Attack and defence
+    quality = teams.copy()
+    quality = quality.assign(
+        attack=fit["attack"].mean(axis=0),
+        attacksd=fit["attack"].std(axis=0),
+        defend=fit["defend"].mean(axis=0),
+        defendsd=fit["defend"].std(axis=0),
+    )
+    quality = quality.assign(
+        attack_low=quality["attack"] - quality["attacksd"],
+        attack_high=quality["attack"] + quality["attacksd"],
+        defend_low=quality["defend"] - quality["defendsd"],
+        defend_high=quality["defend"] + quality["defendsd"],
+    )
 
-predictive = Predictive(model, fit, return_sites=["s1", "s2"])
+    plot_quality(quality)
 
-predicted_score = predictive(
-    random.PRNGKey(0),
-    home_id=predict["Home_id"].values,
-    away_id=predict["Away_id"].values,
-)
+    # Predicted goals and table
+    predict = df[df["split"] == "predict"]
 
-predicted_full = predict.copy()
-predicted_full = predicted_full.assign(
-    score1=predicted_score["s1"].mean(axis=0).round(),
-    score1error=predicted_score["s1"].std(axis=0),
-    score2=predicted_score["s2"].mean(axis=0).round(),
-    score2error=predicted_score["s2"].std(axis=0),
-)
+    predictive = Predictive(model, fit, return_sites=["s1", "s2"])
 
-predicted_full = train.append(
-    predicted_full.drop(columns=["score1error", "score2error"])
-)
+    predicted_score = predictive(
+        random.PRNGKey(0),
+        home_id=predict["Home_id"].values,
+        away_id=predict["Away_id"].values,
+    )
 
-score_table(pl_data)
-score_table(predicted_full)
+    predicted_full = predict.copy()
+    predicted_full = predicted_full.assign(
+        score1=predicted_score["s1"].mean(axis=0).round(),
+        score1error=predicted_score["s1"].std(axis=0),
+        score2=predicted_score["s2"].mean(axis=0).round(),
+        score2error=predicted_score["s2"].std(axis=0),
+    )
+
+    predicted_full = train.append(
+        predicted_full.drop(columns=["score1error", "score2error"])
+    )
+
+    print(score_table(df))
+    print(score_table(predicted_full))
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="numpyro model")
+    parser.add_argument(
+        "-n",
+        "--num-samples",
+        nargs="?",
+        default=10000,
+        type=int,
+    )
+    parser.add_argument("--num-warmup", nargs="?", default=5000, type=int)
+    parser.add_argument("--num-chains", nargs="?", default=2, type=int)
+    parser.add_argument(
+        "--device",
+        default="cpu",
+        type=str,
+        help='"cpu" or "gpu"?',
+    )
+    parser.add_argument(
+        "--rng_seed", default=1, type=int, help="random number generator seed"
+    )
+    args = parser.parse_args()
+
+    numpyro.set_platform(args.device)
+
+    main(args)
