@@ -36,6 +36,7 @@ To do:
 - [`Soss`](https://cscherrer.github.io/Soss.jl/stable/)
 - [`MCX`](https://github.com/rlouf/mcx)
 - [`blackjax`](https://github.com/blackjax-devs/blackjax)
+= [`aeppl`](https://github.com/aesara-devs/aeppl)
 
 ## Model
 We fit a hierarchical model to predict football results over a Premier League season. The idea is taken from the Stan's video on [Hierarchical Modelling in Stan: Predicting the Premier League](https://www.youtube.com/watch?v=dNZQrcAjgXQ), which itself is inspired by the paper [Bayesian hierarchical model for the prediction of
@@ -43,4 +44,4 @@ football results](https://discovery.ucl.ac.uk/id/eprint/16040/1/16040.pdf) by Ba
 
 The [data](https://github.com/openfootball/england) are the 380 matches of the 2019/20 Premier League season, consisting of the home team, the away team and the scoreline.
 
-The number of goals for the home or away team in a match follows a Poisson distribution, with the rate modelled as a log-linear random effect model with an attacking parameter for each team, a defending parameter for each team, and a home advantage parameter in the home goals likelihood. The mean and precision of the attacking and defending parameters are each given their own hyperpriors, thus forming a hierarchical model.
+The number of goals for the home or away team in a match follows a Poisson distribution. The rate is modelled as a log-linear multilevel random effect model with an attacking parameter for each team, a defending parameter for each team, and a home advantage parameter in the home goals likelihood.
