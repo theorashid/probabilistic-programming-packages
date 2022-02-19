@@ -4,9 +4,9 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-# import tensorflow_probability as tfp
 from tensorflow_probability import distributions as tfd
 
+# import tensorflow_probability as tfp
 # from tensorflow_probability import bijectors as tfb
 # import arviz as az
 # from utils import plot_quality, score_table
