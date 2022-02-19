@@ -1,8 +1,0 @@
-{
-    "python.formatting.provider": "black",
-    "editor.formatOnSave": true,
-    "editor.formatOnType": true,
-    "python.linting.enabled": true,
-    "python.linting.flake8Enabled": true,
-    "julia.environmentPath": "/Users/tar15/Documents/PhD/probabilistic-programming-packages/bayes-julia-env"
-}
