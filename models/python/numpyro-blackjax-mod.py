@@ -9,10 +9,11 @@ from numpyro.infer.util import initialize_model
 import jax
 import jax.numpy as jnp
 from jax import random
-from functools import partial
-import blackjax.nuts as nuts
-import blackjax.stan_warmup as stan_warmup
-import arviz as az
+
+# from functools import partial
+# import blackjax.nuts as nuts
+# import blackjax.stan_warmup as stan_warmup
+# import arviz as az
 
 jax.devices()
 
@@ -70,7 +71,7 @@ def model(home_id, away_id, score1_obs=None, score2_obs=None):
         numpyro.sample("s2", dist.Poisson(theta2), obs=score2_obs)
 
 
-rng_key = random.PRNGKey(0)
+rng_key = random.PRNGKey(2)
 
 # translate the model into a log-probability function
 init_params, potential_fn_gen, *_ = initialize_model(
@@ -85,65 +86,69 @@ init_params, potential_fn_gen, *_ = initialize_model(
     dynamic_args=True,
 )
 
-logprob = lambda position: -potential_fn_gen(
-    train["Home_id"].values,
-    train["Away_id"].values,
-    train["score1"].values,
-    train["score2"].values,
-)(position)
+# logprob = lambda position: -potential_fn_gen(
+#     train["Home_id"].values,
+#     train["Away_id"].values,
+#     train["score1"].values,
+#     train["score2"].values,
+# )(position)
 
-initial_position = init_params.z
-initial_state = nuts.new_state(initial_position, logprob)
+# initial_position = init_params.z
+# initial_state = nuts.new_state(initial_position, logprob)
 
-# run the window adaptation (warmup)
-kernel_factory = lambda step_size, inverse_mass_matrix: nuts.kernel(
-    logprob, step_size, inverse_mass_matrix
-)
+# # run the window adaptation (warmup)
+# kernel_factory = lambda step_size, inverse_mass_matrix: nuts.kernel(
+#     logprob, step_size, inverse_mass_matrix
+# )
 
-last_state, (step_size, inverse_mass_matrix), _ = stan_warmup.run(
-    rng_key, kernel_factory, initial_state, 1000
-)
-
-
-@partial(jax.jit, static_argnums=(1, 3))
-def inference_loop(rng_key, kernel, initial_state, num_samples):
-    def one_step(state, rng_key):
-        state, info = kernel(rng_key, state)
-        return state, (state, info)
-
-    keys = jax.random.split(rng_key, num_samples)
-    _, (states, infos) = jax.lax.scan(one_step, initial_state, keys)
-
-    return states, infos
+# last_state, (step_size, inverse_mass_matrix), _ = stan_warmup.run(
+#     rng_key, kernel_factory, initial_state, 1000
+# )
 
 
-# Build the kernel using the step size and inverse mass matrix returned from the window adaptation
-kernel = kernel_factory(step_size, inverse_mass_matrix)
+# @partial(jax.jit, static_argnums=(1, 3))
+# def inference_loop(rng_key, kernel, initial_state, num_samples):
+#     def one_step(state, rng_key):
+#         state, info = kernel(rng_key, state)
+#         return state, (state, info)
 
-# Sample from the posterior distribution
-states, infos = inference_loop(rng_key, kernel, last_state, 100_000)
-states.position["home"].block_until_ready()
+#     keys = jax.random.split(rng_key, num_samples)
+#     _, (states, infos) = jax.lax.scan(one_step, initial_state, keys)
 
-
-acceptance_rate = np.mean(infos.acceptance_probability)
-num_divergent = np.mean(infos.is_divergent)
-print(f"Acceptance rate: {acceptance_rate:.2f}")
-print(f"% divergent transitions: {100*num_divergent:.2f}")
+#     return states, infos
 
 
-states.position["attack"] = states.position["attack"][jnp.newaxis, ...]
-states.position["defend"] = states.position["defend"][jnp.newaxis, ...]
+# # Build the kernel using the step size and inverse mass matrix returned from the window adaptation
+# kernel = kernel_factory(step_size, inverse_mass_matrix)
 
-coords = {"teams": np.arange(20)}
-dims = {"attack": ["teams"], "defend": ["teams"]}
-fit = az.convert_to_inference_data(states.position, coords=coords, dims=dims)
+# # Sample from the posterior distribution
+# states, infos = inference_loop(rng_key, kernel, last_state, 100_000)
+# states.position["home"].block_until_ready()
 
 
-# Plot posterior
-az.plot_forest(
-    fit,
-    var_names=("alpha", "home", "sd_att", "sd_def"),
-    backend="bokeh",
-)
+# acceptance_rate = np.mean(infos.acceptance_probability)
+# num_divergent = np.mean(infos.is_divergent)
+# print(f"Acceptance rate: {acceptance_rate:.2f}")
+# print(f"% divergent transitions: {100*num_divergent:.2f}")
 
-az.plot_trace(fit, var_names=("alpha", "home", "sd_att", "sd_def"), backend="bokeh")
+
+# states.position["attack"] = states.position["attack"][jnp.newaxis, ...]
+# states.position["defend"] = states.position["defend"][jnp.newaxis, ...]
+
+# coords = {"teams": np.arange(20)}
+# dims = {"attack": ["teams"], "defend": ["teams"]}
+# fit = az.convert_to_inference_data(states.position, coords=coords, dims=dims)
+
+
+# # Plot posterior
+# az.plot_forest(
+#     fit,
+#     var_names=("alpha", "home", "sd_att", "sd_def"),
+#     backend="bokeh",
+# )
+
+# az.plot_trace(
+#     fit,
+#     var_names=("alpha", "home", "sd_att", "sd_def"),
+#     backend="bokeh",
+# )

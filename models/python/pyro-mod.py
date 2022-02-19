@@ -45,11 +45,17 @@ def model(home_id, away_id, score1_obs=None, score2_obs=None):
     alpha = pyro.sample("alpha", dist.Normal(0.0, 1.0))
     sd_att = pyro.sample(
         "sd_att",
-        dist.TransformedDistribution(dist.StudentT(3.0, 0.0, 2.5), FoldedTransform()),
+        dist.TransformedDistribution(
+            dist.StudentT(3.0, 0.0, 2.5),
+            FoldedTransform(),
+        ),
     )
     sd_def = pyro.sample(
         "sd_def",
-        dist.TransformedDistribution(dist.StudentT(3.0, 0.0, 2.5), FoldedTransform()),
+        dist.TransformedDistribution(
+            dist.StudentT(3.0, 0.0, 2.5),
+            FoldedTransform(),
+        ),
     )
 
     home = pyro.sample("home", dist.Normal(0.0, 1.0))  # home advantage
@@ -73,13 +79,15 @@ def model(home_id, away_id, score1_obs=None, score2_obs=None):
 def guide(home_id, away_id, score1_obs=None, score2_obs=None):
     mu_locs = pyro.param("mu_loc", torch.tensor(0.0).expand(4))
     mu_scales = pyro.param(
-        "mu_scale", torch.tensor(0.1).expand(4), constraint=constraints.positive
+        "mu_scale",
+        torch.tensor(0.1).expand(4),
+        constraint=constraints.positive,
     )
 
     pyro.sample("alpha", dist.Normal(mu_locs[0], mu_scales[0]))
     pyro.sample("sd_att", dist.LogNormal(mu_locs[1], mu_scales[1]))
     pyro.sample("sd_def", dist.LogNormal(mu_locs[2], mu_scales[2]))
-    pyro.sample("home", dist.Normal(mu_locs[3], mu_scales[3]))  # home advantage
+    pyro.sample("home", dist.Normal(mu_locs[3], mu_scales[3]))
 
     nt = len(np.unique(home_id))
 

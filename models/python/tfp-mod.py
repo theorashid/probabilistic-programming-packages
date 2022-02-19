@@ -1,14 +1,16 @@
 """Run Premier League prediction model using TensorFlow Probability
 """
-# %%
+
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-import tensorflow_probability as tfp
+
+# import tensorflow_probability as tfp
 from tensorflow_probability import distributions as tfd
-from tensorflow_probability import bijectors as tfb
-import arviz as az
-from utils import plot_quality, score_table
+
+# from tensorflow_probability import bijectors as tfb
+# import arviz as az
+# from utils import plot_quality, score_table
 
 __author__ = "Theo Rashid"
 __email__ = "tar15@ic.ac.uk"
@@ -40,11 +42,9 @@ Away_id = tf.convert_to_tensor(pl_data["Away_id"], dtype=tf.int32)
 s1 = tf.convert_to_tensor(pl_data["score1"], dtype=tf.int32)
 s2 = tf.convert_to_tensor(pl_data["score2"], dtype=tf.int32)
 
-# %%
-
 
 # Specify GP model
-def model(home_id, away_id, s1, s2):
+def model(home_id, away_id, team, s1, s2):
     return tfd.JointDistributionNamed(
         dict(
             alpha=tfd.Normal(loc=0.0, scale=1.0),
@@ -52,18 +52,26 @@ def model(home_id, away_id, s1, s2):
             sd_def=tfd.HalfStudentT(df=3.0, loc=0.0, scale=2.5),
             home=tfd.Normal(loc=0.0, scale=1.0),
             attack=lambda sd_att: tfd.MultivariateNormalDiag(
-                loc=tf.gather(0, team, axis=-1), scale_identity_multiplier=sd_att
+                loc=tf.gather(0, team, axis=-1),
+                scale_identity_multiplier=sd_att,
             ),
             defend=lambda sd_def: tfd.MultivariateNormalDiag(
-                loc=tf.gather(0, team, axis=-1), scale_identity_multiplier=sd_def
+                loc=tf.gather(0, team, axis=-1),
+                scale_identity_multiplier=sd_def,
             ),
-            theta1=tf.math.exp(alpha + home + attack[home_id] - defend[away_id])
-            theta2=tf.math.exp(alpha + attack[away_id] - defend[home_id])
-            s1=tfd.Independent(tfd.Poisson(rate=theta1), reinterpreted_batch_ndims=1).
-            s2=tfd.Independent(tfd.Poisson(rate=theta2), reinterpreted_batch_ndims=1)
-            
+            # theta1=tf.math.exp(
+            #     alpha + home + attack[home_id] - defend[away_id]
+            # ),
+            # theta2=tf.math.exp(
+            #     alpha + attack[away_id] - defend[home_id]
+            # ),
+            # s1=tfd.Independent(
+            #     tfd.Poisson(rate=theta1),
+            #     reinterpreted_batch_ndims=1
+            # ),
+            # s2=tfd.Independent(
+            #     tfd.Poisson(rate=theta2),
+            #     reinterpreted_batch_ndims=1
+            # ),
         )
     )
-
-
-# %%

@@ -1,0 +1,28 @@
+name: lint-format
+
+on: push
+
+jobs:
+  lint:
+    name: lint code base
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v2.4.0
+
+      - name: run super-linter
+        uses: github/super-linter@v4.8.7
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  black-python:
+    needs: lint
+    name: format python files
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v2.4.0
+      
+      - name: run black
+        uses: psf/black@stable

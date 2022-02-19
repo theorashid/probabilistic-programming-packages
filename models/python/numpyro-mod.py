@@ -89,7 +89,11 @@ az.plot_forest(
     backend="bokeh",
 )
 
-az.plot_trace(fit, var_names=("alpha", "home", "sd_att", "sd_def"), backend="bokeh")
+az.plot_trace(
+    fit,
+    var_names=("alpha", "home", "sd_att", "sd_def"),
+    backend="bokeh",
+)
 
 fit = mcmc.get_samples()
 

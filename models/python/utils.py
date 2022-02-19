@@ -32,17 +32,17 @@ def score_table(df):
         AwayGD=df["score2"] - df["score1"],
     )
 
-    home_df = (
-        df[["Home", "HomePoints", "HomeGD"]].groupby("Home").sum().rename_axis("Team")
-    )
-    away_df = (
-        df[["Away", "AwayPoints", "AwayGD"]].groupby("Away").sum().rename_axis("Team")
-    )
+    home_df = df[["Home", "HomePoints", "HomeGD"]]
+    away_df = df[["Away", "AwayPoints", "AwayGD"]]
+
+    home_df = home_df.groupby("Home").sum().rename_axis("Team")
+    away_df = away_df.groupby("Away").sum().rename_axis("Team")
 
     df = pd.merge(home_df, away_df, left_index=True, right_index=True)
 
     df = df.assign(
-        Points=df["HomePoints"] + df["AwayPoints"], GD=df["HomeGD"] + df["AwayGD"]
+        Points=df["HomePoints"] + df["AwayPoints"],
+        GD=df["HomeGD"] + df["AwayGD"],
     )
 
     df = df[["Points", "GD"]]
