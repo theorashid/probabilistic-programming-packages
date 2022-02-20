@@ -45,7 +45,7 @@ def score_table(df):
         GD=df["HomeGD"] + df["AwayGD"],
     )
 
-    df = df[["Points", "GD"]]
+    df = df[["Points", "GD"]].astype(int)
 
     df = df.sort_values(["Points", "GD"], ascending=[False, False])
     return df
