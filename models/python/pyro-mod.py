@@ -1,6 +1,8 @@
 """Run Premier League prediction model using pyro
 """
 
+import argparse
+
 import numpy as np
 import pandas as pd
 import pyro
@@ -14,25 +16,28 @@ from utils import plot_quality, score_table
 __author__ = "Theo Rashid"
 __email__ = "tar15@ic.ac.uk"
 
-pl_data = pd.read_csv("../../data/premierleague.csv")
 
-ng = len(pl_data)  # number of games
-npr = 50  # predict the last 5 rounds of games
-ngob = ng - npr  # number of games to train
+def load_data():
+    pl_data = pd.read_csv("../../data/premierleague.csv")
 
-teams = pl_data["Home"].unique()
-teams = pd.DataFrame(teams, columns=["Team"])
-teams["i"] = teams.index
-nt = len(teams)  # number of teams
+    ng = len(pl_data)  # number of games
+    npr = 50  # predict the last 5 rounds of games
+    ngob = ng - npr  # number of games to train
 
-df = pd.merge(pl_data, teams, left_on="Home", right_on="Team", how="left")
-df = df.rename(columns={"i": "Home_id"}).drop("Team", axis=1)
-df = pd.merge(df, teams, left_on="Away", right_on="Team", how="left")
-df = df.rename(columns={"i": "Away_id"}).drop("Team", axis=1)
+    teams = pl_data["Home"].unique()
+    teams = pd.DataFrame(teams, columns=["Team"])
+    teams["i"] = teams.index
 
-df["split"] = np.where(df.index + 1 <= ngob, "train", "predict")
+    df = pd.merge(pl_data, teams, left_on="Home", right_on="Team", how="left")
+    df = df.rename(columns={"i": "Home_id"}).drop("Team", axis=1)
+    df = pd.merge(df, teams, left_on="Away", right_on="Team", how="left")
+    df = df.rename(columns={"i": "Away_id"}).drop("Team", axis=1)
 
-train = df[df["split"] == "train"]
+    df["split"] = np.where(df.index + 1 <= ngob, "train", "predict")
+
+    print(df.head())
+
+    return teams, df
 
 
 class FoldedTransform(dist.transforms.AbsTransform):
@@ -103,86 +108,121 @@ def guide(home_id, away_id, score1_obs=None, score2_obs=None):
         pyro.sample("defend", dist.Normal(mu_team_locs[1], mu_team_scales[1]))
 
 
-# svi setup
-num_iterations = 2000
-initial_lr = 0.1
-gamma = 0.01  # final learning rate will be gamma * initial_lr
-lrd = gamma ** (1 / num_iterations)
+def run_inference(model, guide, home_id, away_id, score1, score2, args):
+    gamma = 0.01  # final learning rate will be gamma * initial_lr
+    lrd = gamma ** (1 / args.num_iterations)
 
-num_particles = 1
-
-svi = SVI(
-    model=model,
-    guide=guide,
-    optim=ClippedAdam({"lr": initial_lr, "lrd": lrd}),
-    loss=Trace_ELBO(num_particles=num_particles),
-)
-
-pyro.clear_param_store()  # clear global parameter cache
-pyro.set_rng_seed(1)
-
-advi_loss = []
-for j in range(num_iterations):
-    # calculate the loss and take a gradient step
-    loss = svi.step(
-        home_id=torch.tensor(train["Home_id"]),
-        away_id=torch.tensor(train["Away_id"]),
-        score1_obs=torch.tensor(train["score1"]),
-        score2_obs=torch.tensor(train["score2"]),
+    svi = SVI(
+        model=model,
+        guide=guide,
+        optim=ClippedAdam({"lr": args.learning_rate, "lrd": lrd}),
+        loss=Trace_ELBO(num_particles=args.num_particles),
     )
-    advi_loss.append(loss)
-    if j % 100 == 0:
-        print("[iteration %4d] loss: %.4f" % (j + 1, loss))
+
+    pyro.clear_param_store()  # clear global parameter cache
+    pyro.set_rng_seed(args.rng_seed)
+
+    advi_loss = []
+    for j in range(args.num_iterations):
+        # calculate the loss and take a gradient step
+        loss = svi.step(
+            home_id=home_id,
+            away_id=away_id,
+            score1_obs=score1,
+            score2_obs=score2,
+        )
+        advi_loss.append(loss)
+        if j % 100 == 0:
+            print("[iteration %4d] loss: %.4f" % (j + 1, loss))
+
+    print("Posterior: ")
+    for i in pyro.get_param_store().items():
+        print(i)
+
+    fit = Predictive(model=model, guide=guide, num_samples=2000)(
+        home_id=home_id, away_id=away_id
+    )
+
+    return fit
 
 
-# Get posterior
-for i in pyro.get_param_store().items():
-    print(i)
+def main(args):
+    print("Loading data...")
+    teams, df = load_data()
+    train = df[df["split"] == "train"]
 
-fit = Predictive(model=model, guide=guide, num_samples=2000)(
-    home_id=train["Home_id"].values, away_id=train["Away_id"].values
-)
+    print("Starting inference...")
+    fit = run_inference(
+        model,
+        guide,
+        torch.tensor(train["Home_id"]),
+        torch.tensor(train["Away_id"]),
+        torch.tensor(train["score1"]),
+        torch.tensor(train["score2"]),
+        args,
+    )
 
-# Attack and defence
-quality = teams.copy()
-quality = quality.assign(
-    attack=fit["attack"].mean(axis=0),
-    attacksd=fit["attack"].std(axis=0),
-    defend=fit["defend"].mean(axis=0),
-    defendsd=fit["defend"].std(axis=0),
-)
-quality = quality.assign(
-    attack_low=quality["attack"] - quality["attacksd"],
-    attack_high=quality["attack"] + quality["attacksd"],
-    defend_low=quality["defend"] - quality["defendsd"],
-    defend_high=quality["defend"] + quality["defendsd"],
-)
+    print("Analyse posterior...")
 
-plot_quality(quality)
+    # Attack and defence
+    quality = teams.copy()
+    quality = quality.assign(
+        attack=fit["attack"].mean(axis=0),
+        attacksd=fit["attack"].std(axis=0),
+        defend=fit["defend"].mean(axis=0),
+        defendsd=fit["defend"].std(axis=0),
+    )
+    quality = quality.assign(
+        attack_low=quality["attack"] - quality["attacksd"],
+        attack_high=quality["attack"] + quality["attacksd"],
+        defend_low=quality["defend"] - quality["defendsd"],
+        defend_high=quality["defend"] + quality["defendsd"],
+    )
 
-# Predicted goals and table
-predict = df[df["split"] == "predict"]
+    plot_quality(quality)
 
-predictive = Predictive(
-    model=model, guide=guide, num_samples=2000, return_sites=["s1", "s2"]
-)
+    # Predicted goals and table
+    predict = df[df["split"] == "predict"]
 
-predicted_score = predictive(
-    home_id=predict["Home_id"].values,
-    away_id=predict["Away_id"].values,
-)
+    predictive = Predictive(
+        model=model, guide=guide, num_samples=2000, return_sites=["s1", "s2"]
+    )
 
-predicted_full = predict.copy()
-predicted_full = predicted_full.assign(
-    score1=predicted_score["s1"].mean(axis=0).round(),
-    score1error=predicted_score["s1"].std(axis=0),
-    score2=predicted_score["s2"].mean(axis=0).round(),
-    score2error=predicted_score["s2"].std(axis=0),
-)
+    predicted_score = predictive(
+        home_id=predict["Home_id"].values,
+        away_id=predict["Away_id"].values,
+    )
 
-predicted_full = train.append(
-    predicted_full.drop(columns=["score1error", "score2error"])
-)
+    predicted_full = predict.copy()
+    predicted_full = predicted_full.assign(
+        score1=predicted_score["s1"].mean(axis=0).round(),
+        score1error=predicted_score["s1"].std(axis=0),
+        score2=predicted_score["s2"].mean(axis=0).round(),
+        score2error=predicted_score["s2"].std(axis=0),
+    )
 
-score_table(pl_data)
-score_table(predicted_full)
+    predicted_full = train.append(
+        predicted_full.drop(columns=["score1error", "score2error"])
+    )
+
+    print(score_table(df))
+    print(score_table(predicted_full))
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="pyro model")
+    parser.add_argument(
+        "-n",
+        "--num-iterations",
+        nargs="?",
+        default=2000,
+        type=int,
+    )
+    parser.add_argument("--learning-rate", nargs="?", default=0.1, type=float)
+    parser.add_argument("--num-particles", nargs="?", default=1, type=int)
+    parser.add_argument(
+        "--rng_seed", default=1, type=int, help="random number generator seed"
+    )
+    args = parser.parse_args()
+
+    main(args)
