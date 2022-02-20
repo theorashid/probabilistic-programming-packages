@@ -13,9 +13,6 @@ from jax import random
 from numpyro.infer import MCMC, NUTS, Predictive
 from utils import plot_quality, score_table
 
-numpyro.set_platform("cpu")
-numpyro.set_host_device_count(2)
-
 __author__ = "Theo Rashid"
 __email__ = "tar15@ic.ac.uk"
 
@@ -182,11 +179,13 @@ if __name__ == "__main__":
         type=str,
         help='"cpu" or "gpu"?',
     )
+    parser.add_argument("--num-cores", nargs="?", default=2, type=int)
     parser.add_argument(
         "--rng_seed", default=1, type=int, help="random number generator seed"
     )
     args = parser.parse_args()
 
     numpyro.set_platform(args.device)
+    numpyro.set_host_device_count(args.num_cores)
 
     main(args)

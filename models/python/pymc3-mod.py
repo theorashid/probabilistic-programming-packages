@@ -72,7 +72,7 @@ def main(args):
             draws=args.num_samples,
             tune=args.num_warmup,
             chains=args.num_chains,
-            cores=1,
+            cores=args.num_cores,
             random_seed=args.rng_seed,
         )
 
@@ -144,6 +144,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--num-warmup", nargs="?", default=5000, type=int)
     parser.add_argument("--num-chains", nargs="?", default=2, type=int)
+    parser.add_argument("--num-cores", nargs="?", default=1, type=int)
     parser.add_argument(
         "--rng_seed", default=1, type=int, help="random number generator seed"
     )
