@@ -80,13 +80,13 @@ def model(home_id, away_id, nt):
 @tf.function
 def target_log_prob(alpha, home, sd_att, sd_def, attack, defend):
     """Computes joint log prob pinned at `s1` and `s2`."""
-    return model(home_id, away_id).log_prob(
+    return model(home_id, away_id, nt).log_prob(
         [alpha, home, sd_att, sd_def, attack, defend, s1, s2]
     )
 
 
 @tf.function(autograph=False, jit_compile=True)
-def run_inference(num_chains, num_results, num_burnin_steps):
+def run_inference(num_chains, num_results, num_burnin_steps, nt):
     """Samples from the partial pooling model."""
     nuts = tfp.mcmc.NoUTurnSampler(
         target_log_prob_fn=target_log_prob,
