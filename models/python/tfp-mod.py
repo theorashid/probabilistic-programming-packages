@@ -86,7 +86,7 @@ def target_log_prob(alpha, home, sd_att, sd_def, attack, defend):
 
 
 @tf.function(autograph=False, jit_compile=True)
-def run_inference(num_chains, num_results, num_burnin_steps, nt):
+def run_inference(num_chains, num_results, num_burnin_steps):
     """Samples from the partial pooling model."""
     nuts = tfp.mcmc.NoUTurnSampler(
         target_log_prob_fn=target_log_prob,
