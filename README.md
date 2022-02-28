@@ -13,6 +13,7 @@ nimble  | 7.7              | 46.2           | –
 JAGS    | 5.0              | 405.9          | –
 PyMC    | 8.8              | 63.8           | –
 numpyro | 7.2              | 293.8          | 10.9
+tfp     | 22.9             | 192.0          | 2.4
 Turing  | 14.9             | 16.3           | –
 
 ## Packages
@@ -26,17 +27,17 @@ Implemented:
 - [`PyMC3`](http://docs.pymc.io)
 - [`pyro`](http://pyro.ai)
 - [`numpyro`](http://num.pyro.ai/)
+- [`tensorflow_probability`](https://www.tensorflow.org/probability/)
 - [`Turing`](https://turing.ml/)
 
 To do:
-- [`tensorflow_probability`](https://www.tensorflow.org/probability/)
 - [`Bean Machine`](https://beanmachine.org/)
 - [`edward2`](https://github.com/google/edward2)
 - [`Gen`](https://www.gen.dev)
 - [`Soss`](https://cscherrer.github.io/Soss.jl/stable/)
 - [`MCX`](https://github.com/rlouf/mcx)
 - [`blackjax`](https://github.com/blackjax-devs/blackjax)
-= [`aeppl`](https://github.com/aesara-devs/aeppl)
+- [`aeppl`](https://github.com/aesara-devs/aeppl)
 
 ## Model
 We fit a hierarchical model to predict football results over a Premier League season. The idea is taken from the Stan's video on [Hierarchical Modelling in Stan: Predicting the Premier League](https://www.youtube.com/watch?v=dNZQrcAjgXQ), which itself is inspired by the paper [Bayesian hierarchical model for the prediction of
