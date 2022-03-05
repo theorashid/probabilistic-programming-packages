@@ -132,7 +132,6 @@ def main(args):
     nt = len(teams)
 
     print("Starting inference...")
-    tf.random.set_seed(args.rng_seed)
     mcmc = run_inference(
         num_chains=args.num_chains,
         num_results=args.num_samples,
@@ -165,10 +164,10 @@ def main(args):
     # Attack and defence
     quality = teams.copy()
     quality = quality.assign(
-        attack=samples["attack"].mean(axis=0),
-        attacksd=samples["attack"].std(axis=0),
-        defend=samples["defend"].mean(axis=0),
-        defendsd=samples["defend"].std(axis=0),
+        attack=samples["attack"].mean(axis=(0, 1)),
+        attacksd=samples["attack"].std(axis=(0, 1)),
+        defend=samples["defend"].mean(axis=(0, 1)),
+        defendsd=samples["defend"].std(axis=(0, 1)),
     )
     quality = quality.assign(
         attack_low=quality["attack"] - quality["attacksd"],
@@ -211,8 +210,8 @@ def main(args):
         )
     )
 
-    s1 = tfd.Poisson(log_rate=theta1).sample()
-    s2 = tfd.Poisson(log_rate=theta2).sample()
+    s1 = np.array(tfd.Poisson(log_rate=theta1).sample())
+    s2 = np.array(tfd.Poisson(log_rate=theta2).sample())
 
     predicted_full = predict.copy()
     predicted_full = predicted_full.assign(
@@ -242,9 +241,6 @@ if __name__ == "__main__":
     parser.add_argument("--num-warmup", nargs="?", default=5000, type=int)
     parser.add_argument("--num-chains", nargs="?", default=2, type=int)
     parser.add_argument("--num-cores", nargs="?", default=2, type=int)
-    parser.add_argument(
-        "--rng_seed", default=1, type=int, help="random number generator seed"
-    )
     args = parser.parse_args()
 
     main(args)
