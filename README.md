@@ -6,15 +6,16 @@ These are __very__ preliminary results based on the minimum effective sample siz
 
 Please get in touch if you'd like to help with this project, either [here](mailto:theoaorashid@gmail.com?subject=ppl%20project), [here](https://twitter.com/theorashid), or (even better) create a pull request. See [this post](https://theorashid.github.io/post/ppl-benchmark-help/) for more information.
 
-PPL     | compile time (s) | CPU ESS/second | GPU ESS/second
-------- | ---------------- | -------------- | --------------
-stan    | 14.8             | 181.1          | –
-nimble  | 7.7              | 46.2           | –
-JAGS    | 5.0              | 405.9          | –
-PyMC    | 8.8              | 63.8           | –
-numpyro | 7.2              | 293.8          | 10.9
-tfp     | 22.9             | 192.0          | 2.4
-Turing  | 14.9             | 16.3           | –
+PPL         | compile time (s) | CPU ESS/second | GPU ESS/second
+----------- | ---------------- | -------------- | --------------
+stan        | 14.8             | 181.1          | –
+nimble      | 7.7              | 46.2           | –
+JAGS        | 5.0              | 405.9          | –
+PyMC        | 8.8              | 63.8           | –
+numpyro     | 7.2              | 293.8          | 10.9
+tfp         | 22.9             | 192.0          | 2.4
+beanmachine | -                | 5.9            | –
+Turing      | 14.9             | 16.3           | –
 
 ## Packages
 Implemented:
@@ -28,10 +29,10 @@ Implemented:
 - [`pyro`](http://pyro.ai)
 - [`numpyro`](http://num.pyro.ai/)
 - [`tensorflow_probability`](https://www.tensorflow.org/probability/)
+- [`Bean Machine`](https://beanmachine.org/)
 - [`Turing`](https://turing.ml/)
 
 To do:
-- [`Bean Machine`](https://beanmachine.org/)
 - [`edward2`](https://github.com/google/edward2)
 - [`Gen`](https://www.gen.dev)
 - [`Soss`](https://cscherrer.github.io/Soss.jl/stable/)

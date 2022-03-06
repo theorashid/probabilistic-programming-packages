@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - pytorch
 dependencies:
-  - python==3.8
+  - python==3.9
   - black
   - flake8
   - isort
@@ -17,8 +17,8 @@ dependencies:
   - bokeh
   - pip
   - pip:
-    # - git+https://github.com/pyro-ppl/numpyro.git
     - tensorflow
     - tensorflow-probability
     # - edward2
     - blackjax
+    - beanmachine
