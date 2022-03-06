@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import pymc3 as pm
 import theano.tensor as tt
-
 from utils import plot_quality, score_table
 
 __author__ = "Theo Rashid"

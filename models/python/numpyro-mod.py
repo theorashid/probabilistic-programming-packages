@@ -11,7 +11,6 @@ import numpyro.distributions as dist
 import pandas as pd
 from jax import random
 from numpyro.infer import MCMC, NUTS, Predictive
-
 from utils import plot_quality, score_table
 
 __author__ = "Theo Rashid"

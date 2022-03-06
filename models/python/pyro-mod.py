@@ -11,7 +11,6 @@ import torch
 from pyro.infer import SVI, Predictive, Trace_ELBO
 from pyro.optim import ClippedAdam
 from torch.distributions import constraints
-
 from utils import plot_quality, score_table
 
 __author__ = "Theo Rashid"

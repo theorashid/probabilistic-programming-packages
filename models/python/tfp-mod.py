@@ -9,7 +9,6 @@ import pandas as pd
 import tensorflow as tf
 import tensorflow_probability as tfp
 from tensorflow_probability import distributions as tfd
-
 from utils import plot_quality, score_table
 
 __author__ = "Theo Rashid"

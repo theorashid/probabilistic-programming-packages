@@ -10,7 +10,6 @@ import pandas as pd
 import torch
 import torch.distributions as dist
 from beanmachine.ppl.model import RVIdentifier
-
 from utils import plot_quality, score_table
 
 __author__ = "Theo Rashid"
