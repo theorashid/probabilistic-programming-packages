@@ -11,6 +11,7 @@ PPL         | compile time (s) | CPU ESS/second | GPU ESS/second
 stan        | 14.8             | 181.1          | –
 nimble      | 7.7              | 46.2           | –
 JAGS        | 5.0              | 405.9          | –
+greta       | 9.3              | 12.1           |
 PyMC        | 8.8              | 63.8           | –
 numpyro     | 7.2              | 293.8          | 10.9
 tfp         | 22.9             | 192.0          | 2.4
@@ -24,6 +25,7 @@ Implemented:
 - [`JAGS`](https://mcmc-jags.sourceforge.io)
 - [`rstanarm`](https://mc-stan.org/rstanarm/)
 - [`brms`](https://paul-buerkner.github.io/brms/)
+- [`greta`](https://greta-stats.org)
 - [`INLA`](https://www.r-inla.org)
 - [`PyMC3`](http://docs.pymc.io)
 - [`pyro`](http://pyro.ai)
