@@ -1,5 +1,6 @@
 library(tidyverse)
 library(rstan)
+library(posterior)
 library(bayesplot)
 
 set.seed(1)
@@ -48,7 +49,7 @@ fit <- stan(
 )
 
 # Plot posterior
-posterior <- as.array(fit)
+posterior <- as_draws_array(fit)
 dimnames(posterior)
 mcmc_intervals(
     posterior,

@@ -1,5 +1,6 @@
 library(tidyverse)
 library(rstanarm)
+library(posterior)
 library(bayesplot)
 
 set.seed(1)
@@ -49,7 +50,7 @@ fit <- stan_glmer(
     thin = 1
 )
 
-posterior <- as.array(fit)
+posterior <- as_draws_array(fit)
 dimnames(posterior)
 mcmc_intervals(
     posterior,
@@ -69,7 +70,7 @@ mcmc_trace(
     facet_args = list(ncol = 1)
 )
 
-samples <- as.data.frame(fit) %>% as_tibble()
+samples <- as_draws_df(fit)
 
 # Attack and defence
 quality <- tibble(

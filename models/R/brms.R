@@ -1,5 +1,6 @@
 library(tidyverse)
 library(brms)
+library(posterior)
 library(bayesplot)
 
 set.seed(1)
@@ -52,7 +53,7 @@ fit <- brm(
     thin = 1
 )
 
-posterior <- as.array(fit)
+posterior <- as_draws_array(fit)
 dimnames(posterior)
 mcmc_intervals(
     posterior,
@@ -60,11 +61,15 @@ mcmc_intervals(
 )
 mcmc_trace(
     posterior,
-    pars = c("mu_att", "mu_def", "sd_att", "sd_def", "home"),
+    pars = c(
+        "sd_attacking__Intercept",
+        "sd_defending__Intercept",
+        "b_HomeTRUE"
+    ),
     facet_args = list(ncol = 1)
 )
 
-samples <- as.data.frame(fit) %>% as_tibble()
+samples <- as_draws_df(fit)
 
 # Attack and defence
 quality <- tibble(

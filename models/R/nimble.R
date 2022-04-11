@@ -79,7 +79,7 @@ model <- nimbleModel(
 
 Cmodel <- compileNimble(model)
 
-mcmcConf <- configureMCMC(
+conf <- configureMCMC(
     model = Cmodel,
     monitors = c(
         "alpha", "home",
@@ -91,7 +91,7 @@ mcmcConf <- configureMCMC(
     print = TRUE
 )
 
-mcmc <- buildMCMC(mcmcConf)
+mcmc <- buildMCMC(conf)
 
 Cmcmc <- compileNimble(mcmc)
 

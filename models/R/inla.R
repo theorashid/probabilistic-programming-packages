@@ -46,9 +46,7 @@ fit <- inla(
 
 summary(fit)
 
-
 fit$summary.fitted.values$sd[ngob:ng]
-
 
 # Attack and defence
 quality <- tibble(
