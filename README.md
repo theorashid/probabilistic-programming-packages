@@ -11,7 +11,7 @@ PPL         | compile time (s) | CPU ESS/second | GPU ESS/second
 stan        | 14.8             | 181.1          | –
 nimble      | 7.7              | 46.2           | –
 JAGS        | 5.0              | 405.9          | –
-greta       | 9.3              | 12.1           |
+greta       | 9.3              | 12.1           | -
 PyMC        | 8.8              | 63.8           | –
 numpyro     | 7.2              | 293.8          | 10.9
 tfp         | 22.9             | 192.0          | 2.4
