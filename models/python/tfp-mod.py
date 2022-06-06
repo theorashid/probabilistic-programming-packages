@@ -16,7 +16,7 @@ __email__ = "tar15@ic.ac.uk"
 
 
 def load_data():
-    pl_data = pd.read_csv("../../data/premierleague.csv")
+    pl_data = pd.read_csv("data/premierleague.csv")
 
     ng = len(pl_data)  # number of games
     npr = 50  # predict the last 5 rounds of games
