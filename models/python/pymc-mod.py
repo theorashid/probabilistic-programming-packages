@@ -1,4 +1,4 @@
-"""Run Premier League prediction model using PyMC3
+"""Run Premier League prediction model using PyMC
 """
 
 import argparse
@@ -6,8 +6,7 @@ import argparse
 import arviz as az
 import numpy as np
 import pandas as pd
-import pymc3 as pm
-import theano.tensor as tt
+import pymc as pm
 from utils import plot_quality, score_table
 
 __author__ = "Theo Rashid"
@@ -15,7 +14,7 @@ __email__ = "tar15@ic.ac.uk"
 
 
 def load_data():
-    pl_data = pd.read_csv("../../data/premierleague.csv")
+    pl_data = pd.read_csv("data/premierleague.csv")
 
     ng = len(pl_data)  # number of games
     npr = 50  # predict the last 5 rounds of games
@@ -57,12 +56,12 @@ def main(args):
         defend = pm.Normal("defend", mu=0, sigma=sd_def, shape=nt)
 
         # data
-        home_id = pm.Data("home_data", train["Home_id"])
-        away_id = pm.Data("away_data", train["Away_id"])
+        home_id = pm.MutableData("home_data", train["Home_id"])
+        away_id = pm.MutableData("away_data", train["Away_id"])
 
         # likelihood
-        theta1 = tt.exp(alpha + home + attack[home_id] - defend[away_id])
-        theta2 = tt.exp(alpha + attack[away_id] - defend[home_id])
+        theta1 = pm.math.exp(alpha + home + attack[home_id] - defend[away_id])
+        theta2 = pm.math.exp(alpha + attack[away_id] - defend[home_id])
 
         pm.Poisson("s1", mu=theta1, observed=train["score1"])
         pm.Poisson("s2", mu=theta2, observed=train["score2"])
@@ -92,10 +91,10 @@ def main(args):
     # Attack and defence
     quality = teams.copy()
     quality = quality.assign(
-        attack=fit["attack"].mean(axis=0),
-        attacksd=fit["attack"].std(axis=0),
-        defend=fit["defend"].mean(axis=0),
-        defendsd=fit["defend"].std(axis=0),
+        attack=fit.posterior["attack"].mean(axis=(0, 1)),
+        attacksd=fit.posterior["attack"].std(axis=(0, 1)),
+        defend=fit.posterior["defend"].mean(axis=(0, 1)),
+        defendsd=fit.posterior["defend"].std(axis=(0, 1)),
     )
     quality = quality.assign(
         attack_low=quality["attack"] - quality["attacksd"],
@@ -119,10 +118,22 @@ def main(args):
 
     predicted_full = predict.copy()
     predicted_full = predicted_full.assign(
-        score1=predicted_score["s1"].mean(axis=0).round(),
-        score1error=predicted_score["s1"].std(axis=0),
-        score2=predicted_score["s2"].mean(axis=0).round(),
-        score2error=predicted_score["s2"].std(axis=0),
+        score1=predicted_score.posterior_predictive["s1"]
+        .mean(
+            axis=(0, 1),
+        )
+        .round(),
+        score1error=predicted_score.posterior_predictive["s1"].std(
+            axis=(0, 1),
+        ),
+        score2=predicted_score.posterior_predictive["s2"]
+        .mean(
+            axis=(0, 1),
+        )
+        .round(),
+        score2error=predicted_score.posterior_predictive["s2"].std(
+            axis=(0, 1),
+        ),
     )
 
     predicted_full = train.append(
@@ -134,7 +145,7 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="pymc3 model")
+    parser = argparse.ArgumentParser(description="pymc model")
     parser.add_argument(
         "-n",
         "--num-samples",

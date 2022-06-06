@@ -9,7 +9,7 @@ dependencies:
   - isort
   - ipykernel
   - pandas
-  - pymc3
+  - pymc
   - pytorch::pytorch
   - pyro-ppl
   - numpyro

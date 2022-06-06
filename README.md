@@ -6,17 +6,18 @@ These are __very__ preliminary results based on the minimum effective sample siz
 
 Please get in touch if you'd like to help with this project, either [here](mailto:theoaorashid@gmail.com?subject=ppl%20project), [here](https://twitter.com/theorashid), or (even better) create a pull request. See [this post](https://theorashid.github.io/post/ppl-benchmark-help/) for more information.
 
-PPL         | compile time (s) | CPU ESS/second | GPU ESS/second
------------ | ---------------- | -------------- | --------------
-stan        | 14.8             | 181.1          | –
-nimble      | 7.7              | 46.2           | –
-JAGS        | 5.0              | 405.9          | –
-greta       | 9.3              | 12.1           | -
-PyMC        | 8.8              | 63.8           | –
-numpyro     | 7.2              | 293.8          | 10.9
-tfp         | 22.9             | 192.0          | 2.4
-beanmachine | -                | 5.9            | –
-Turing      | 14.9             | 16.3           | –
+PPL             | compile time (s) | CPU ESS/second | GPU ESS/second
+--------------- | ---------------- | -------------- | --------------
+stan            | 14.8             | 181.1          | –
+nimble          | 7.7              | 46.2           | –
+JAGS            | 5.0              | 405.9          | –
+greta           | 9.3              | 12.1           | -
+PyMC            | 13.0             | 56.2           | –
+PyMC + blackjax | -                | -              | –
+numpyro         | 7.2              | 293.8          | 10.9
+tfp             | 22.9             | 192.0          | 2.4
+beanmachine     | -                | 5.9            | –
+Turing          | 14.9             | 16.3           | –
 
 ## Packages
 Implemented:
@@ -27,7 +28,8 @@ Implemented:
 - [`brms`](https://paul-buerkner.github.io/brms/)
 - [`greta`](https://greta-stats.org)
 - [`INLA`](https://www.r-inla.org)
-- [`PyMC3`](http://docs.pymc.io)
+- [`PyMC`](http://docs.pymc.io)
+- [`blackjax`](https://blackjax-devs.github.io/blackjax/)
 - [`pyro`](http://pyro.ai)
 - [`numpyro`](http://num.pyro.ai/)
 - [`tensorflow_probability`](https://www.tensorflow.org/probability/)
@@ -39,7 +41,6 @@ To do:
 - [`Gen`](https://www.gen.dev)
 - [`Soss`](https://cscherrer.github.io/Soss.jl/stable/)
 - [`MCX`](https://github.com/rlouf/mcx)
-- [`blackjax`](https://github.com/blackjax-devs/blackjax)
 - [`aeppl`](https://github.com/aesara-devs/aeppl)
 
 ## Model
