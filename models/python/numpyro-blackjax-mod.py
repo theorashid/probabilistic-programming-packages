@@ -13,6 +13,7 @@ import numpyro.distributions as dist
 import pandas as pd
 from jax import random
 from numpyro.infer.util import initialize_model
+from utils import plot_quality
 
 __author__ = "Theo Rashid"
 __email__ = "tar15@ic.ac.uk"
@@ -150,48 +151,22 @@ def main(args):
         backend="bokeh",
     )
 
-    # # Attack and defence
-    # quality = teams.copy()
-    # quality = quality.assign(
-    #     attack=fit.posterior["attack"].mean(axis=0),
-    #     attacksd=fit.posterior["attack"].std(axis=0),
-    #     defend=fit.posterior["defend"].mean(axis=0),
-    #     defendsd=fit.posterior["defend"].std(axis=0),
-    # )
-    # quality = quality.assign(
-    #     attack_low=quality["attack"] - quality["attacksd"],
-    #     attack_high=quality["attack"] + quality["attacksd"],
-    #     defend_low=quality["defend"] - quality["defendsd"],
-    #     defend_high=quality["defend"] + quality["defendsd"],
-    # )
+    # Attack and defence
+    quality = teams.copy()
+    quality = quality.assign(
+        attack=fit.posterior["attack"].mean(axis=(0, 1)),
+        attacksd=fit.posterior["attack"].std(axis=(0, 1)),
+        defend=fit.posterior["defend"].mean(axis=(0, 1)),
+        defendsd=fit.posterior["defend"].std(axis=(0, 1)),
+    )
+    quality = quality.assign(
+        attack_low=quality["attack"] - quality["attacksd"],
+        attack_high=quality["attack"] + quality["attacksd"],
+        defend_low=quality["defend"] - quality["defendsd"],
+        defend_high=quality["defend"] + quality["defendsd"],
+    )
 
-    # plot_quality(quality)
-
-    # # Predicted goals and table
-    # predict = df[df["split"] == "predict"]
-
-    # predictive = Predictive(model, fit, return_sites=["s1", "s2"])
-
-    # predicted_score = predictive(
-    #     random.PRNGKey(0),
-    #     home_id=predict["Home_id"].values,
-    #     away_id=predict["Away_id"].values,
-    # )
-
-    # predicted_full = predict.copy()
-    # predicted_full = predicted_full.assign(
-    #     score1=predicted_score["s1"].mean(axis=0).round(),
-    #     score1error=predicted_score["s1"].std(axis=0),
-    #     score2=predicted_score["s2"].mean(axis=0).round(),
-    #     score2error=predicted_score["s2"].std(axis=0),
-    # )
-
-    # predicted_full = train.append(
-    #     predicted_full.drop(columns=["score1error", "score2error"])
-    # )
-
-    # print(score_table(df))
-    # print(score_table(predicted_full))
+    plot_quality(quality)
 
 
 if __name__ == "__main__":
