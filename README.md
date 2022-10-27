@@ -4,7 +4,7 @@ Trying out different probabilistic programming languages on the same statistical
 ## _Current_ results
 These are __very__ preliminary results based on the minimum effective sample size (ESS) across all parameters. All PPLs were run in Colab. More PPLs will be added, models and evaluation metrics will be improved by collaborating with devs, and the hardware will be swapped out for something more consistent.
 
-Please get in touch if you'd like to help with this project, either [here](mailto:theoaorashid@gmail.com?subject=ppl%20project), [here](https://twitter.com/theorashid), or (even better) create a pull request. See [this post](https://theorashid.github.io/post/ppl-benchmark-help/) for more information.
+Please get in touch if you'd like to help with this project, either [here](mailto:theoaorashid@gmail.com?subject=ppl%20project), [here](https://twitter.com/theorashid), or (even better) create a pull request.
 
 PPL             | compile time (s) | CPU ESS/second | GPU ESS/second
 --------------- | ---------------- | -------------- | --------------
